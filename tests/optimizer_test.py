@@ -9,18 +9,20 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from tests.poutyne_hp_optimizer import PoutyneCifar10HpOptimizer
 from torchvision.transforms import ToTensor
+import torch
 
 
 class TestHpOptimizer(unittest.TestCase):
     def test_optimize_random_gen_result(self):
+        # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
         start_time = time.time()
 
         hp_space = dict(
-            epoch=[5, 10, 15, 20],
+            epoch=[e for e in range(5, 105, 5)],
             batch_size=[32, 64],
             learning_rate=[10**e for e in [-3, -2, -1]],
         )
-        param_gen = RandomHpSearch(hp_space, max_itr=10)
+        param_gen = RandomHpSearch(hp_space, max_seconds=60**2)
         cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
 
         cifar, cifar_test = load_cifar10()
@@ -37,13 +39,15 @@ class TestHpOptimizer(unittest.TestCase):
         optimizer = optim.SGD(net.parameters(), lr=opt_hp.get("learning_rate"))
 
         model = pt.Model(net, optimizer, 'cross_entropy', batch_metrics=['accuracy'])
-        model.cuda()
+        if torch.cuda.is_available():
+            model.cuda()
 
-        history = model.fit_generator(train_loader, valid_loader, epochs=int(opt_hp.get("epoch")))
+        history = model.fit_generator(train_loader, valid_loader, epochs=int(opt_hp.get("epoch")), verbose=True)
         test_loss, test_acc = model.evaluate_generator(test_loader)
 
-        self.assertGreaterEqual(test_acc, 0.9, f"Random Gen result: {test_acc*100:2.f}%"
-                                               f" in {time.time()-start_time:.2f} [s]")
+        self.assertTrue(test_acc >= 0.75, f"Random Gen result: {test_acc:.2f}%"
+                                          f" in {time.time()-start_time:.2f} [s]")
+        print(f"{opt_hp}, test_acc: {test_acc}")
 
 
 if __name__ == '__main__':

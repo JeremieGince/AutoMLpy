@@ -22,18 +22,18 @@ class PoutyneCifar10HpOptimizer(HpOptimizer):
 
     def fit_model(
             self,
-            model: object,
+            model: pt.Model,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             **hp
     ) -> None:
-        history = model.fit_generator(X, epochs=self.hp.get("epoch", 5))
+        history = model.fit_generator(X, epochs=self.hp.get("epoch", 5), verbose=False)
 
     def score(
             self,
-            model: object,
+            model: pt.Model,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
             **hp
     ) -> Tuple[float, float]:
-        test_loss, test_acc = self.model.evaluate_generator(zip(X, y))
+        test_loss, test_acc = model.evaluate_generator(zip(X, y))
         return test_acc
