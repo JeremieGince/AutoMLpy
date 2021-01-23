@@ -56,7 +56,7 @@ class ParameterGenerator:
         self.xx = np.array(list(zip(*[_x.ravel() for _x in self.xx])))
 
         self.current_itr: int = 0
-        self.max_itr = kwargs.get("max_itr", 30)
+        self.max_itr = kwargs.get("max_itr", len(self.xx))
         self.start_time = time.time()
         self.max_seconds = kwargs.get("max_seconds", 60 ** 2)
         self.history = []
