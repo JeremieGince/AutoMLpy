@@ -17,19 +17,23 @@ from modules.parameter_generator import ParameterGenerator
 
 
 class GridParamGen(ParameterGenerator):
-    def __init__(self, values_dict):
-        super(GridParamGen, self).__init__(values_dict)
-        xx = np.meshgrid(*[values_dict[p] for p in self._values_names])
-        self.params = list(zip(*[_xx.ravel() for _xx in xx]))
+    def __init__(self,
+                 values_dict: Union[Dict[Union[int, str], List[Union[int, float]]],
+                                    Dict[Union[int, str], Iterable]],
+                 **kwargs):
+        super(GridParamGen, self).__init__(values_dict, **kwargs)
         self.idx = 0
 
     def reset(self):
+        super(GridParamGen, self).reset()
         self.idx = 0
 
     def __len__(self):
-        return len(self.params)
+        return max(self.max_itr, len(self.xx))
 
     def get_trial_param(self):
-        param = self.params[self.idx]
-        self.idx += 1
-        return {self._values_names[i]: param[i] for i in range(len(param))}
+        self.current_itr += 1
+
+        t_param = self.convert_subspace_to_param(self.xx[self.idx])
+        self.idx = self.current_itr % len(self)
+        return t_param

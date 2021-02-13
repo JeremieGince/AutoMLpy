@@ -13,6 +13,15 @@ from multiprocessing import Pool
 import time
 import os
 import logging
+import plotly.graph_objects as go
+
+# ------- App Server -------- #
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output
+import threading
+import plotly.io as pio
 
 
 class ParameterGenerator:
@@ -56,10 +65,17 @@ class ParameterGenerator:
         self.xx = np.array(list(zip(*[_x.ravel() for _x in self.xx])))
 
         self.current_itr: int = 0
-        self.max_itr = kwargs.get("max_itr", len(self.xx))
+        self.max_itr = int(kwargs.get("max_itr", len(self.xx)))
         self.start_time = time.time()
         self.max_seconds = kwargs.get("max_seconds", 60 ** 2)
         self.history = []
+
+        # ------- App Server -------- #
+        self.app = None
+        self.app_thread = None
+
+    def __del__(self):
+        self.close_graph_server()
 
     @property
     def bounds_names(self) -> List[str]:
@@ -201,7 +217,79 @@ class ParameterGenerator:
         """
         pass
 
+    def start_graph_server(self, **kwargs):
+        if self.app_thread is not None:
+            return
+
+        self.app = dash.Dash(__name__)
+
+        self.app.layout = html.Div([
+            html.P("Hyper-parameter: "),
+            dcc.Dropdown(
+                id="dropdown",
+                options=[
+                    {'label': p_name, 'value': p_name}
+                    for p_name in self._values_names
+                ],
+                value=self._values_names[0],
+                clearable=False,
+            ),
+            dcc.Graph(id="hp-graph"),
+        ])
+
+        self.app.callback(Output("hp-graph", "figure"), [Input("dropdown", "value")])(self.update_graph_server)
+        self.app.run_server(
+            debug=True,
+            port=kwargs.get("port", 80),
+            host=kwargs.get("host", "127.0.0.1"),
+            use_reloader=False,
+        )
+        # self.app_thread = threading.Thread(target=self.app.run_server,
+        #                                    kwargs=dict(
+        #                                        debug=True,
+        #                                        port=kwargs.get("port", 80),
+        #                                        host=kwargs.get("host", "127.0.0.1")
+        #                                    ))
+        # self.app_thread.start()
+
+    def close_graph_server(self):
+        if self.app_thread is None:
+            return
+        self.app_thread.join()
+        self.app_thread = None
+
+    def update_graph_server(self, parameter_name: str):
+        dim = self._values_names.index(parameter_name)
+        # _xx = np.unique(self.xx[:, dim])
+
+        param_trial_x = []
+        param_trial_score = []
+        for i, (p_trial, p_score) in enumerate(self.history):
+            param_trial_x.append(p_trial[parameter_name])
+            param_trial_score.append(p_score)
+
+        x, y = np.array(param_trial_x), np.array(param_trial_score)
+
+        fig = go.Figure(
+            data=[
+                go.Scatter(x=x, y=y,
+                           mode='markers',
+                           name="Trial points",
+                           marker=dict(size=5, color=y, colorscale='Viridis', showscale=True),
+                           ),
+            ]
+        )
+        fig.update_xaxes(title=f"{parameter_name}: parameter space [-]")
+        fig.update_yaxes(title="Score [-]")
+
+        save_dir = "figures/parameter_generators/"
+        os.makedirs(save_dir, exist_ok=True)
+        # fig.write_html(f"{save_dir}/{self.__class__.__name__}-{parameter_name}.html")
+        # pio.write_html(self.app, file=f"{save_dir}/{self.__class__.__name__}.html", auto_open=True)
+        return fig
+
     def save_best_param(self, **kwargs):
+        # TODO: numpy -> json
         save_dir = kwargs.get("save_dir", "optimal_hp/")
         save_name = kwargs.get("save_name", "opt_hp")
         save_path = save_dir + '/' + save_name + ".npy"
