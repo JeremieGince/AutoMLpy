@@ -53,6 +53,7 @@ class ParameterGenerator:
         self.start_time (int): Starting time of the optimisation.
         self.history List[Tuple]: The history of the hp search.
         """
+        # ------- Conversion tables -------- #
         self._param_name_to_idx: Dict[str, Dict[str, int]] = {}
         self._param_idx_to_name: Dict[str, Dict[int, str]] = {}
         self._param_name_to_type: Dict[Union[str, int], Callable] = {}
@@ -60,26 +61,32 @@ class ParameterGenerator:
         self._values_names = list(values_dict.keys())
         self._values_dict = values_dict
 
-        self.default_save_name = '-'.join(self._values_names)
-
         for p in self._values_names:
             self._param_name_to_type[p] = type(self._values_dict[p][0])
             if self.check_str_in_iterable(values_dict[p]):
                 self.add_conversion_tables_param_name_to_idx(p, values_dict[p])
                 values_dict[p] = self.convert_param_to_idx(p, values_dict[p])
 
+        # ------- Hp space -------- #
         self.xx = np.meshgrid(*[values_dict[p] for p in self._values_names])
         self.xx = np.array(list(zip(*[_x.ravel() for _x in self.xx])))
 
+        # ------- Counters -------- #
         self.current_itr: int = 0
         self.max_itr = int(kwargs.get("max_itr", len(self.xx)))
         self.start_time = time.time()
         self.max_seconds = kwargs.get("max_seconds", 60 ** 2)
+
+        # ------- History containers -------- #
         self.history = []
 
         # ------- App Server -------- #
         self.app = None
         self.app_thread = None
+
+        # ------- Saving -------- #
+        self.default_save_dir = kwargs.get("save_dir", f"parameter_generators_data/{self.__class__.__name__}/")
+        self.default_save_name = kwargs.get("save_name", '-'.join(self._values_names))
 
     def __del__(self):
         self.close_graph_server()
@@ -124,6 +131,13 @@ class ParameterGenerator:
         if len(self.history) == 0:
             raise ValueError("get_best_param must be called after an optimisation")
         return max(self.history, key=lambda t: t[-1])[0]
+
+    def get_best_params_repr(self) -> str:
+        if len(self.history) > 0:
+            predicted_best_param_repr = '\n\t'.join([f'{k}: {v}' for k, v in self.get_best_param().items()])
+        else:
+            predicted_best_param_repr = "None"
+        return predicted_best_param_repr
 
     def add_score_info(self, param: Dict[str, Union[int, float]], score: float) -> None:
         """
@@ -300,7 +314,7 @@ class ParameterGenerator:
         fig.update_yaxes(title="Score [-]")
         return fig
 
-    def write_optimization_to_html(self, **kwargs):
+    def _compute_x_y_dict(self, **kwargs):
         x_y_dict = {p_name: dict() for p_name in self._values_names}
 
         for p_name in x_y_dict:
@@ -312,6 +326,10 @@ class ParameterGenerator:
 
             x, y = np.array(param_trial_x), np.array(param_trial_score)
             x_y_dict[p_name] = dict(x=x, y=y)
+        return x_y_dict
+
+    def write_optimization_to_html(self, **kwargs):
+        x_y_dict = self._compute_x_y_dict(**kwargs)
 
         fig = go.Figure()
 
@@ -377,41 +395,37 @@ class ParameterGenerator:
             ]
         )
 
-        if len(self.history) > 0:
-            predicted_best_param_string = '\n\t'.join([f'{k}: {v}' for k, v in self.get_best_param().items()])
-        else:
-            predicted_best_param_string = "None"
-
         # Add annotation
         fig.update_layout(
             annotations=[
                 dict(text="Hyper-parameter:", showarrow=False,
                      x=0.89, y=1.1, xref="paper", yref="paper", align="left",
                      xanchor="right", yanchor="middle"),
-                dict(text=f"Predicted best hyper-parameters: {predicted_best_param_string}",
+                dict(text=f"Predicted best hyper-parameters: {self.get_best_params_repr()}",
                      showarrow=False,
                      x=0.1, y=-0.1, xref="paper", yref="paper", align="left",
                      xanchor="left", yanchor="top")
             ]
         )
 
-        save_dir = kwargs.get("save_dir", f"figures/parameter_generators/{self.__class__.__name__}/")
-        os.makedirs(save_dir, exist_ok=True)
-        if kwargs.get("save", True):
-            fig.write_html(f"{save_dir}/{self.__class__.__name__}"+self.default_save_name +
-                           f"-{kwargs.get('save_name', '')}.html")
+        self.save_html_fig(fig, **kwargs)
         if kwargs.get("show", True):
             fig.show()
 
         return fig
 
-    def save_best_param(self, **kwargs):
-        # TODO: numpy -> json
-        save_dir = kwargs.get("save_dir", "optimal_hp/")
-        save_name = kwargs.get("save_name", "opt_hp")
-        save_path = save_dir + '/' + save_name
+    def save_html_fig(self, fig, **kwargs):
+        save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/html_files/")
         os.makedirs(save_dir, exist_ok=True)
-        np.save(save_path + ".npy", self.get_best_param(), allow_pickle=True)
+        if kwargs.get("save", True):
+            fig.write_html(f"{save_dir}/{self.default_save_name}-{kwargs.get('save_name', '')}.html")
 
-        with open(f'{save_path}.json', 'w') as f:
+    def save_best_param(self, **kwargs):
+        save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/optimal_hp/")
+        save_name = kwargs.get("save_name", f"{self.default_save_name}-opt_hp")
+        os.makedirs(save_dir, exist_ok=True)
+        # save_path = save_dir + '/' + save_name
+        # np.save(save_path + ".npy", self.get_best_param(), allow_pickle=True)
+
+        with open(f'{save_dir}/{save_name}.json', 'w') as f:
             json.dump(self.get_best_param(), f, indent=4)
