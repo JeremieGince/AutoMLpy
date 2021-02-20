@@ -107,3 +107,4 @@ __pycache__/
 views_docs.pkl
 modules/backbones/pickles/bags-of-words.pkl
 /venv/
+*/temp/
