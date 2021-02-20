@@ -14,6 +14,7 @@ import time
 import os
 import logging
 import plotly.graph_objects as go
+import json
 
 # ------- App Server -------- #
 import dash
@@ -408,6 +409,9 @@ class ParameterGenerator:
         # TODO: numpy -> json
         save_dir = kwargs.get("save_dir", "optimal_hp/")
         save_name = kwargs.get("save_name", "opt_hp")
-        save_path = save_dir + '/' + save_name + ".npy"
+        save_path = save_dir + '/' + save_name
         os.makedirs(save_dir, exist_ok=True)
-        np.save(save_path, self.get_best_param(), allow_pickle=True)
+        np.save(save_path + ".npy", self.get_best_param(), allow_pickle=True)
+
+        with open(f'{save_path}.json', 'w') as f:
+            json.dump(self.get_best_param(), f, indent=4)
