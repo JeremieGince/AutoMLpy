@@ -40,8 +40,10 @@ class RandomHpSearch(ParameterGenerator):
 
         """
         super(RandomHpSearch, self).__init__(values_dict, **kwargs)
+        self._idx_choices = list(range(self.xx.shape[0]))
+        np.random.shuffle(self._idx_choices)
 
-    def get_trial_param(self) -> Dict[str, Union[int, float]]:
+    def get_trial_param(self) -> Dict[Union[str, int], object]:
         """
         Returned a set of trial parameter.
 
@@ -49,6 +51,13 @@ class RandomHpSearch(ParameterGenerator):
         """
         self.current_itr += 1
 
-        idx = np.random.randint(self.xx.shape[0])
+        idx = self._idx_choices.pop(0)
+
+        if len(self._idx_choices) == 0:
+            self._idx_choices = list(range(self.xx.shape[0]))
+            np.random.shuffle(self._idx_choices)
+
         t_param = self.convert_subspace_to_param(self.xx[idx])
+        self.write_optimization_to_html(show=False, save=True,
+                                        save_name=f"itr{self.current_itr}")
         return t_param
