@@ -1,3 +1,12 @@
+import enum
+
+
+class DeepLib(enum.Enum):
+    Null = -1
+    Pytorch = 0
+    Tensorflow = 1
+    SkLearn = 2
+
 
 def logs_file_setup(file: str):
     import logging
@@ -16,13 +25,26 @@ def logs_file_setup(file: str):
     logging.getLogger().addHandler(sh)
 
 
-def log_device_setup():
+def log_device_setup(deepLib: DeepLib = DeepLib.Null):
     import logging
-    import torch
     import sys
-    from subprocess import check_output
 
     logging.info(f'__Python VERSION:{sys.version}')
+
+    setup_func = {
+        DeepLib.Null: lambda: None,
+        DeepLib.Pytorch: log_pytorch_device_setup,
+        DeepLib.Tensorflow: log_tensorflow_device_setup,
+        DeepLib.SkLearn: log_sklearn_device_setup,
+    }
+    setup_func[deepLib]()
+
+
+def log_pytorch_device_setup():
+    import logging
+    from subprocess import check_output
+    import torch
+
     logging.info(f'__pyTorch VERSION:{torch.__version__}')
     logging.info(f'__CUDA VERSION:\n{check_output(["nvcc", "--version"]).decode("utf-8")}')
     logging.info(f'__CUDNN VERSION:{torch.backends.cudnn.version()}')
@@ -38,3 +60,12 @@ def log_device_setup():
         logging.info(f'Allocated: {round(torch.cuda.memory_allocated(0) / 1024 ** 3, 1)} GB')
         logging.info(f'Cached:   {round(torch.cuda.memory_reserved(0) / 1024 ** 3, 1)} GB')
         logging.info(f"Memory summary: \n{torch.cuda.memory_summary()}")
+
+
+def log_tensorflow_device_setup():
+    raise NotImplementedError()
+
+
+def log_sklearn_device_setup():
+    raise NotImplementedError()
+
