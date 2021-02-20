@@ -16,16 +16,16 @@ import logging
 from modules.parameter_generator import ParameterGenerator
 
 
-class GridParamGen(ParameterGenerator):
+class GridHpSearch(ParameterGenerator):
     def __init__(self,
                  values_dict: Union[Dict[Union[int, str], List[Union[int, float]]],
                                     Dict[Union[int, str], Iterable]],
                  **kwargs):
-        super(GridParamGen, self).__init__(values_dict, **kwargs)
+        super(GridHpSearch, self).__init__(values_dict, **kwargs)
         self.idx = 0
 
     def reset(self):
-        super(GridParamGen, self).reset()
+        super(GridHpSearch, self).reset()
         self.idx = 0
 
     def __len__(self):
