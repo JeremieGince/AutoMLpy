@@ -134,7 +134,12 @@ class ParameterGenerator:
 
     def get_best_params_repr(self) -> str:
         if len(self.history) > 0:
-            predicted_best_param_repr = '\n\t'.join([f'{k}: {v}' for k, v in self.get_best_param().items()])
+            predicted_best_param_repr = ""
+            for k, v in self.get_best_param().items():
+                if isinstance(v, float):
+                    predicted_best_param_repr += f"\t{k}: {v:.3f}\n"
+                else:
+                    predicted_best_param_repr += f"\t{k}: {v}\n"
         else:
             predicted_best_param_repr = "None"
         return predicted_best_param_repr
