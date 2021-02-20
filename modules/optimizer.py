@@ -37,6 +37,8 @@ class HpOptimizer:
             model: object,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
+            X_val: Union[np.ndarray, pd.DataFrame, torch.Tensor] = None,
+            y_val: Union[np.ndarray, torch.Tensor] = None,
             **hp
     ) -> object:
         raise NotImplementedError("fit_model method must be implemented by the user")
@@ -116,6 +118,7 @@ class HpOptimizer:
                         logging.error(str(e))
 
                 if verbose:
+                    logging.info(f"\ntrial_params: {params} --> mean score: {mean_score:.3f}")
                     progress.set_postfix_str(f"mean_score: {mean_score:.2f}")
                     progress.update()
 
@@ -312,101 +315,63 @@ def multi_gpo_precessing(
     return [param_gen for param_gen in outputs]
 
 
-class TestingModel:
-
-    hp_possible_values = {
-        "hp0": [a for a in "abcdefghijklmnopqrstuvxyz"],
-        "hp1": [i ** 2 for i in range(5)],
-        "hp2": [str(i**3) for i in range(5)],
-        "hp6": ["unique"],
-        "hp7": [str(2*i) for i in range(5)],
-    }
-
-    hp_bounds = {
-        "hp3": [0.0, 5.2, 1],
-        "hp4": [-1.3, 42.3, 5],
-        "hp5": [2.7, 125.9, 10],
-    }
-
-    hp_best_values = {
-        "hp0": "x",
-        "hp1": 9,
-        "hp2": 27,
-        "hp3": 3,
-        "hp4": 3,
-        "hp5": 3,
-        "hp6": "unique",
-        "hp7": 3,
-    }
-
-    def __init__(self, noise=0.0, **hp):
-        self.hp = hp
-        self.set_default_hp(**TestingModel.hp_best_values)
-        self.noise = noise
-
-    def set_hp(self, **hp):
-        for hpKey, hpValue in hp.items():
-            self.hp[hpKey] = hpValue
-
-    def set_default_hp(self, **hp):
-        for hpKey, hpValue in hp.items():
-            if hpKey not in self.hp:
-                self.hp[hpKey] = hpValue
-
-    def fit(self, *args, **kwargs):
-        pass
-
-    def score(self, *args, **kwargs):
-        me = 0.0
-        for i, (k, v) in enumerate(self.hp.items()):
-            # e = (float(v) - float(TestingModel.hp_best_values[k])) / float(TestingModel.hp_best_values[k])
-            e = float(v != TestingModel.hp_best_values[k])
-            noise = np.random.normal(0, self.noise)
-            me = (i * me + noise + e) / (i + 1)
-        return 1 - me
-
-
 if __name__ == '__main__':
-    from modules.gp_search import GPOParamGen
+    from modules.grid_search import GridHpSearch
+    from modules.random_search import RandomHpSearch
+    from tests.pytorch_items.pytorch_datasets import get_MNIST_X_y, get_Cifar10_X_y
+    import time
+    from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
+    import numpy as np
 
-    gpo_param_gens = [
-        GPOParamGen(
-            values_dict=TestingModel.hp_possible_values,
-            max_itr=100_000,
-            max_seconds=10,
-            Lambda=0.5,
-            bandwidth=0.5,
-        ),
-        GPOParamGen(
-            values_dict=TestingModel.hp_possible_values,
-            max_itr=100_000,
-            max_seconds=10,
-        )
-    ]
+    from modules.logging_tools import logs_file_setup, log_device_setup, DeepLib
 
-    gpo_param_gens = multi_gpo_precessing(
-        model_cls=TestingModel,
-        X=pd.DataFrame(np.random.random((50, 50))),
-        y=np.random.random((50, 1)),
-        param_gens=gpo_param_gens,
+    logs_file_setup(__file__)
+    log_device_setup(DeepLib.Pytorch)
+
+    cifar10_X_y_dict = get_Cifar10_X_y()
+    cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
+
+    hp_space = dict(
+        epochs=list(range(1, 26)),
+        batch_size=[32, 64],
+        learning_rate=[10 ** e for e in [-3, -2, -1]],
+        nesterov=[True, False],
+        momentum=np.linspace(0.01, 0.99, 50),
+        # use_batchnorm=[True, False],
+        pre_normalized=[True, False],
+    )
+    param_gen = RandomHpSearch(hp_space, max_seconds=60 * 60 * 0.5, max_itr=10)
+
+    start_time = time.time()
+    param_gen = cifar10_hp_optimizer.optimize(
+        param_gen,
+        cifar10_X_y_dict["train"]["x"],
+        cifar10_X_y_dict["train"]["y"],
         n_splits=2,
-        model_cls_args=[0.0],
-        fit_kwargs={
-        },
-        forward_kwargs={
-        },
+        save_kwargs=dict(save_name=f"cifar10_hp_opt"),
+    )
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    opt_hp = param_gen.get_best_param()
+
+    logging.info(f"Predicted best hyper-parameters: \n{param_gen.get_best_params_repr()}")
+    model = cifar10_hp_optimizer.build_model(**opt_hp)
+    cifar10_hp_optimizer.fit_model_(
+        model,
+        cifar10_X_y_dict["train"]["x"],
+        cifar10_X_y_dict["train"]["y"],
         verbose=True,
-        nb_cpu="max",
-        optimisation_func=optimize_parameters,
+        **opt_hp
     )
 
-    for gpo in gpo_param_gens:
-        print('-'*25)
-        gpo.save_best_param(save_dir="test_save_opt_hp", save_name="test_opt_hp")
-        opt_hp = np.load(f"test_save_opt_hp/test_opt_hp.npy", allow_pickle=True).item()
-        print(type(opt_hp), opt_hp)
-        print(f"optimal_hp: \n" + '\n'.join([f'{k}: {v}' for k, v in opt_hp.items()]))
-        print('-' * 25)
+    test_acc, _ = cifar10_hp_optimizer.score(
+        model,
+        cifar10_X_y_dict["test"]["x"],
+        cifar10_X_y_dict["test"]["y"],
+        **opt_hp
+    )
 
-    for gpo in gpo_param_gens:
-        gpo.show_expectation()
+    param_gen.write_optimization_to_html(show=True, save_name="cifar10", title="Cifar10")
+
+    logging.info(f"test accuracy: {test_acc*100:.3f}%")
