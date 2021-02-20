@@ -8,6 +8,7 @@ from torchvision.transforms import ToTensor, ConvertImageDtype, Compose
 from torchvision import transforms
 from torchvision.datasets.mnist import MNIST
 from torchvision.datasets.cifar import CIFAR10
+import logging
 
 BASE_PATH = '~/tests/pytorch_datasets/'
 
@@ -21,13 +22,15 @@ def get_MNIST_datasets(seed: int = 42, path=os.path.join(BASE_PATH, 'mnist'), **
         [
             ToTensor(),
             ConvertImageDtype(torch.float),
-            transforms.Lambda(lambda x: x/255.),
+            transforms.Lambda(lambda x: x/1.),
             # ToTensor(),
          ]
     )
 
+    logging.info("Downloading MNIST dataset...")
     full_train_dataset = MNIST(path, train=True, download=True, transform=mnist_transforms)
     test_dataset = MNIST(path, train=False, download=True, transform=mnist_transforms)
+    logging.info("Downloading MNIST dataset --> Done")
 
     indices = list(range(len(full_train_dataset)))
     np.random.shuffle(indices)
@@ -78,13 +81,15 @@ def get_Cifar10_datasets(seed: int = 42, path=os.path.join(BASE_PATH, 'cifar10')
         [
             ToTensor(),
             ConvertImageDtype(torch.float),
-            transforms.Lambda(lambda x: x/255.),
+            transforms.Lambda(lambda x: x/1.),
             # ToTensor(),
          ]
     )
 
+    logging.info("Downloading Cifar10 dataset...")
     full_train_dataset = CIFAR10(path, train=True, download=True, transform=cifar10_transforms)
     test_dataset = CIFAR10(path, train=False, download=True, transform=cifar10_transforms)
+    logging.info("Downloading Cifar10 dataset --> Done")
 
     indices = list(range(len(full_train_dataset)))
     np.random.shuffle(indices)
