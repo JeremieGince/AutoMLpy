@@ -56,8 +56,11 @@ class PoutyneMNISTHpOptimizer(HpOptimizer):
             model: pt.Model,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
+            verbose=False,
             **hp
     ) -> object:
+        if hp.get("pre_normalized", True):
+            X = X/torch.max(X)
         history = model.fit_generator(
             DataLoader(
                 TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
@@ -66,7 +69,7 @@ class PoutyneMNISTHpOptimizer(HpOptimizer):
                 shuffle=True
             ),
             epochs=hp.get("epochs", 1),
-            verbose=False
+            verbose=verbose
         )
         return model
 
@@ -77,6 +80,8 @@ class PoutyneMNISTHpOptimizer(HpOptimizer):
             y: Union[np.ndarray, torch.Tensor],
             **hp
     ) -> Tuple[float, float]:
+        if hp.get("pre_normalized", True):
+            X = X/torch.max(X)
         test_loss, test_acc = model.evaluate_generator(
             DataLoader(
                 TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
@@ -88,7 +93,7 @@ class PoutyneMNISTHpOptimizer(HpOptimizer):
 
 
 class PoutyneCifar10HpOptimizer(HpOptimizer):
-    def build_model(self, **hp) -> object:
+    def build_model(self, **hp) -> pt.Model:
         if hp.get("use_batchnorm", True):
             net = CifarNetBatchNorm()
         else:
@@ -107,9 +112,11 @@ class PoutyneCifar10HpOptimizer(HpOptimizer):
             model: pt.Model,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
+            verbose=False,
             **hp
-    ) -> object:
-        print(hp)
+    ) -> pt.Model:
+        if hp.get("pre_normalized", True):
+            X = X/torch.max(X)
         history = model.fit_generator(
             DataLoader(
                 TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
@@ -118,7 +125,7 @@ class PoutyneCifar10HpOptimizer(HpOptimizer):
                 shuffle=True
             ),
             epochs=hp.get("epochs", 1),
-            verbose=False
+            verbose=verbose
         )
         return model
 
@@ -129,6 +136,8 @@ class PoutyneCifar10HpOptimizer(HpOptimizer):
             y: Union[np.ndarray, torch.Tensor],
             **hp
     ) -> Tuple[float, float]:
+        if hp.get("pre_normalized", True):
+            X = X/torch.max(X)
         test_loss, test_acc = model.evaluate_generator(
             DataLoader(
                 TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
@@ -143,26 +152,29 @@ if __name__ == '__main__':
     from tests.pytorch_items.pytorch_datasets import get_MNIST_X_y, get_Cifar10_X_y
 
     hp = dict(
-        epochs=5,
+        epochs=15,
         batch_size=64,
         learning_rate=0.1,
-        # nesterov=True,
-        # momentum=0.9,
+        nesterov=True,
+        momentum=0.9,
+        use_batchnorm=True,
+        pre_normalized=True,
     )
-    cifar10_X_y_dict = get_Cifar10_X_y()
-    cifar10_opt = PoutyneCifar10HpOptimizer()
-    cifar10_model = cifar10_opt.build_model(**hp)
-    cifar10_opt.fit_model_(
-        cifar10_model,
-        cifar10_X_y_dict["train"]["x"],
-        cifar10_X_y_dict["train"]["y"],
+    X_y_dict = get_Cifar10_X_y()
+    opt = PoutyneCifar10HpOptimizer()
+    model = opt.build_model(**hp)
+    opt.fit_model_(
+        model,
+        X_y_dict["train"]["x"],
+        X_y_dict["train"]["y"],
+        verbose=True,
         **hp
     )
 
-    test_acc, _ = cifar10_opt.score(
-        cifar10_model,
-        cifar10_X_y_dict["test"]["x"],
-        cifar10_X_y_dict["test"]["y"],
+    test_acc, _ = opt.score(
+        model,
+        X_y_dict["test"]["x"],
+        X_y_dict["test"]["y"],
         **hp
     )
     print(test_acc)
