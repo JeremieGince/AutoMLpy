@@ -44,7 +44,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
         cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
 
         hp_space = dict(
-            epochs=[e for e in range(5, 35, 5)],
+            epochs=list(range(1, 26)),
             batch_size=[32, 64],
             learning_rate=[10 ** e for e in [-3, -2, -1]],
             nesterov=[True, False],
@@ -52,7 +52,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
             use_batchnorm=[True, False],
             pre_normalized=[True, False],
         )
-        param_gen = RandomHpSearch(hp_space, max_seconds=60 * 5, max_itr=10_000)
+        param_gen = RandomHpSearch(hp_space, max_seconds=60 * 60 * 1, max_itr=1_000)
 
         start_time = time.time()
         param_gen = cifar10_hp_optimizer.optimize(
@@ -68,7 +68,12 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
         opt_hp = param_gen.get_best_param()
 
         model = cifar10_hp_optimizer.build_model(**opt_hp)
-        cifar10_hp_optimizer.fit_model_(model, cifar10_X_y_dict["train"]["x"], cifar10_X_y_dict["train"]["y"])
+        cifar10_hp_optimizer.fit_model_(
+            model,
+            cifar10_X_y_dict["train"]["x"],
+            cifar10_X_y_dict["train"]["y"],
+            **opt_hp
+        )
 
         test_acc, _ = cifar10_hp_optimizer.score(
             model,
@@ -100,14 +105,14 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
         mnist_hp_optimizer = PoutyneMNISTHpOptimizer()
 
         hp_space = dict(
-            epochs=[e for e in range(5, 35, 5)],
+            epochs=list(range(1, 16)),
             batch_size=[32, 64],
             learning_rate=[10 ** e for e in [-3, -2, -1]],
             nesterov=[True, False],
             momentum=np.linspace(0, 0.99, 50),
             pre_normalized=[False, True],
         )
-        param_gen = RandomHpSearch(hp_space, max_seconds=60*5, max_itr=10_000)
+        param_gen = RandomHpSearch(hp_space, max_seconds=60*60*1, max_itr=1_000)
 
         start_time = time.time()
         param_gen = mnist_hp_optimizer.optimize(
@@ -123,7 +128,12 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
         opt_hp = param_gen.get_best_param()
 
         model = mnist_hp_optimizer.build_model(**opt_hp)
-        mnist_hp_optimizer.fit_model_(model, mnist_X_y_dict["train"]["x"], mnist_X_y_dict["train"]["y"])
+        mnist_hp_optimizer.fit_model_(
+            model,
+            mnist_X_y_dict["train"]["x"],
+            mnist_X_y_dict["train"]["y"],
+            **opt_hp
+        )
 
         test_acc, _ = mnist_hp_optimizer.score(
             model,
