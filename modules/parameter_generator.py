@@ -7,7 +7,7 @@ from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import KFold
-from typing import Dict, Union, List, Iterable, Hashable, Tuple
+from typing import Dict, Union, List, Iterable, Hashable, Tuple, Callable
 import pandas as pd
 from multiprocessing import Pool
 import time
@@ -46,17 +46,23 @@ class ParameterGenerator:
         self._param_name_to_idx (Dict[str, int]) : Dict container for string bounds element used to convert str to idx.
         self._param_idx_to_name (Dict[int, str]) : Dict container for string bounds element used to convert back idx
                                                    to str.
+        self._param_name_to_type (Dict[Union[str, int], Callable]): Conversion table to convert param to
+                                                                    it's initial type.
         self.current_itr (int): Current iteration of the gpo.
         self.start_time (int): Starting time of the optimisation.
         self.history List[Tuple]: The history of the hp search.
         """
-        self._param_name_to_idx = {}
-        self._param_idx_to_name = {}
+        self._param_name_to_idx: Dict[str, Dict[str, int]] = {}
+        self._param_idx_to_name: Dict[str, Dict[int, str]] = {}
+        self._param_name_to_type: Dict[Union[str, int], Callable] = {}
 
         self._values_names = list(values_dict.keys())
         self._values_dict = values_dict
 
+        self.default_save_name = '-'.join(self._values_names)
+
         for p in self._values_names:
+            self._param_name_to_type[p] = type(self._values_dict[p][0])
             if self.check_str_in_iterable(values_dict[p]):
                 self.add_conversion_tables_param_name_to_idx(p, values_dict[p])
                 values_dict[p] = self.convert_param_to_idx(p, values_dict[p])
@@ -114,6 +120,8 @@ class ParameterGenerator:
         """
         Get the best predicted parameters with the current exploration.
         """
+        if len(self.history) == 0:
+            raise ValueError("get_best_param must be called after an optimisation")
         return max(self.history, key=lambda t: t[-1])[0]
 
     def add_score_info(self, param: Dict[str, Union[int, float]], score: float) -> None:
@@ -163,7 +171,7 @@ class ParameterGenerator:
         assert param_name in self._param_name_to_idx
         return [self._param_name_to_idx[param_name][v] for v in values]
 
-    def convert_idx_to_param(self, param_name: str, indexes: Iterable[int]) -> List[int]:
+    def convert_idx_to_param(self, param_name: str, indexes: Iterable[int]) -> List[str]:
         """
         Convert a parameter to name using the conversion tables.
 
@@ -179,7 +187,7 @@ class ParameterGenerator:
         assert param_name in self._param_idx_to_name
         return [self._param_idx_to_name[param_name][idx] for idx in indexes]
 
-    def convert_subspace_to_param(self, sub_space: np.ndarray) -> dict:
+    def convert_subspace_to_param(self, sub_space: np.ndarray) -> Dict[Union[str, int], object]:
         """
         Convert a subspace of space self.xx to a set of parameters.
         Parameters
@@ -194,6 +202,8 @@ class ParameterGenerator:
         for p_name in _param:
             if p_name in self._param_idx_to_name:
                 _param[p_name] = self._param_idx_to_name[p_name][_param[p_name]]
+
+        _param = {p_name: self._param_name_to_type[p_name](v) for p_name, v in _param.items()}
         return _param
 
     @staticmethod
@@ -259,9 +269,6 @@ class ParameterGenerator:
         self.app_thread = None
 
     def update_graph_server(self, parameter_name: str):
-        dim = self._values_names.index(parameter_name)
-        # _xx = np.unique(self.xx[:, dim])
-
         param_trial_x = []
         param_trial_score = []
         for i, (p_trial, p_score) in enumerate(self.history):
@@ -279,13 +286,122 @@ class ParameterGenerator:
                            ),
             ]
         )
+
+        fig.update_layout(
+            width=800,
+            height=900,
+            autosize=False,
+            margin=dict(t=0, b=0, l=0, r=0),
+            template="plotly_white",
+        )
+
         fig.update_xaxes(title=f"{parameter_name}: parameter space [-]")
         fig.update_yaxes(title="Score [-]")
+        return fig
 
-        save_dir = "figures/parameter_generators/"
+    def write_optimization_to_html(self, **kwargs):
+        x_y_dict = {p_name: dict() for p_name in self._values_names}
+
+        for p_name in x_y_dict:
+            param_trial_x = []
+            param_trial_score = []
+            for i, (p_trial, p_score) in enumerate(self.history):
+                param_trial_x.append(p_trial[p_name])
+                param_trial_score.append(p_score)
+
+            x, y = np.array(param_trial_x), np.array(param_trial_score)
+            x_y_dict[p_name] = dict(x=x, y=y)
+
+        fig = go.Figure()
+
+        fig.add_trace(
+            go.Scatter(x=x_y_dict[self._values_names[0]]['x'],
+                       y=x_y_dict[self._values_names[0]]['y'],
+                       mode='markers',
+                       name="Trial points",
+                       marker=dict(size=5, color=x_y_dict[self._values_names[0]]['y'],
+                                   colorscale='Viridis', showscale=True),
+                       ),
+        )
+
+        fig.update_xaxes(title=f"{self._values_names[0]}: parameter space [-]")
+        fig.update_yaxes(title="Score [-]")
+
+        fig.update_layout(
+            title=kwargs.get("title", ""),
+            # width=1080,
+            # height=750,
+            autosize=True,
+            margin=dict(t=150, b=150, l=150, r=150),
+            template="plotly_dark",
+        )
+
+        # Update 3D scene options
+        fig.update_scenes(
+            aspectratio=dict(x=1, y=1, z=0.7),
+            aspectmode="manual"
+        )
+
+        # Add dropdown
+        fig.update_layout(
+            updatemenus=[
+                dict(
+                    buttons=list([
+                        dict(
+                            args=[
+                                dict(
+                                    x=[x_y_dict[p_name]['x']],
+                                    y=[x_y_dict[p_name]['y']],
+                                    marker=dict(color=x_y_dict[p_name]['y'], showscale=True),
+                                ),
+                                {
+                                    # "title": f"{p_name}",
+                                    "xaxis.title.text": f"{p_name}: parameter space [-]",
+                                    "yaxis.title.text": "Score [-]",
+                                }
+                            ],
+                            label=p_name,
+                            method="update"
+                        )
+                        for p_name in self._values_names
+                    ]),
+                    direction="down",
+                    pad={"r": 10, "t": 10},
+                    showactive=True,
+                    x=0.9,
+                    xanchor="left",
+                    y=1.1,
+                    yanchor="middle"
+                ),
+            ]
+        )
+
+        if len(self.history) > 0:
+            predicted_best_param_string = '\n\t'.join([f'{k}: {v}' for k, v in self.get_best_param().items()])
+        else:
+            predicted_best_param_string = "None"
+
+        # Add annotation
+        fig.update_layout(
+            annotations=[
+                dict(text="Hyper-parameter:", showarrow=False,
+                     x=0.89, y=1.1, xref="paper", yref="paper", align="left",
+                     xanchor="right", yanchor="middle"),
+                dict(text=f"Predicted best hyper-parameters: {predicted_best_param_string}",
+                     showarrow=False,
+                     x=0.1, y=-0.1, xref="paper", yref="paper", align="left",
+                     xanchor="left", yanchor="top")
+            ]
+        )
+
+        save_dir = kwargs.get("save_dir", f"figures/parameter_generators/{self.__class__.__name__}/")
         os.makedirs(save_dir, exist_ok=True)
-        # fig.write_html(f"{save_dir}/{self.__class__.__name__}-{parameter_name}.html")
-        # pio.write_html(self.app, file=f"{save_dir}/{self.__class__.__name__}.html", auto_open=True)
+        if kwargs.get("save", True):
+            fig.write_html(f"{save_dir}/{self.__class__.__name__}"+self.default_save_name +
+                           f"-{kwargs.get('save_name', '')}.html")
+        if kwargs.get("show", True):
+            fig.show()
+
         return fig
 
     def save_best_param(self, **kwargs):
