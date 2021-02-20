@@ -32,12 +32,13 @@ class HpOptimizer:
     def build_model(self, **hp) -> object:
         raise NotImplementedError("build_model method must be implemented by the user")
 
-    def fit_model(
+    def fit_model_(
             self,
             model: object,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
+            y: Union[np.ndarray, torch.Tensor],
             **hp
-    ) -> None:
+    ) -> object:
         raise NotImplementedError("fit_model method must be implemented by the user")
 
     def score(
@@ -107,7 +108,7 @@ class HpOptimizer:
                             raise ValueError(f"X must be Union[np.ndarray, pd.DataFrame, torch.Tensor]")
 
                         model = self.build_model(**params)
-                        self.fit_model(model, sub_X_train, **params)
+                        self.fit_model_(model, sub_X_train, sub_y_train, **params)
 
                         score, _ = self.score(model, sub_X_test, sub_y_test, **params)
                         mean_score = (j * mean_score + score) / (j + 1)
