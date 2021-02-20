@@ -59,5 +59,6 @@ class RandomHpSearch(ParameterGenerator):
 
         t_param = self.convert_subspace_to_param(self.xx[idx])
         self.write_optimization_to_html(show=False, save=True,
+                                        save_dir=f"{self.default_save_dir}/temp/html_files/",
                                         save_name=f"itr{self.current_itr}")
         return t_param
