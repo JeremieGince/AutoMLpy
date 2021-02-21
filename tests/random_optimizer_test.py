@@ -48,7 +48,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
             batch_size=[32, 64],
             learning_rate=np.linspace(1e-4, 1e-1, 50),
             nesterov=[True, False],
-            momentum=np.linspace(0, 0.99, 50),
+            momentum=np.linspace(0.01, 0.99, 50),
             use_batchnorm=[True, False],
             pre_normalized=[True, False],
         )
@@ -109,7 +109,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
             batch_size=[32, 64, 128],
             learning_rate=np.linspace(1e-4, 1e-1, 50),
             nesterov=[True, False],
-            momentum=np.linspace(0, 0.99, 50),
+            momentum=np.linspace(0.01, 0.99, 50),
             pre_normalized=[False, True],
         )
         param_gen = RandomHpSearch(hp_space, max_seconds=60*60*1, max_itr=1_000)
