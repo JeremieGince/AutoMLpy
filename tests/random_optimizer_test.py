@@ -46,7 +46,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
         hp_space = dict(
             epochs=list(range(1, 26)),
             batch_size=[32, 64],
-            learning_rate=[10 ** e for e in [-3, -2, -1]],
+            learning_rate=np.linspace(1e-4, 1e-1, 50),
             nesterov=[True, False],
             momentum=np.linspace(0, 0.99, 50),
             use_batchnorm=[True, False],
@@ -86,7 +86,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
 
         self.assertTrue(
             test_acc >= 0.7,
-            f"Cifar10 --> Random Gen result: {test_acc:.2f}%"
+            f"Cifar10 --> Random Gen result: {test_acc*100:.3f}%"
         )
         self.assertTrue(
             elapsed_time <= 1.15 * param_gen.max_seconds,
@@ -106,8 +106,8 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
 
         hp_space = dict(
             epochs=list(range(1, 16)),
-            batch_size=[32, 64],
-            learning_rate=[10 ** e for e in [-3, -2, -1]],
+            batch_size=[32, 64, 128],
+            learning_rate=np.linspace(1e-4, 1e-1, 50),
             nesterov=[True, False],
             momentum=np.linspace(0, 0.99, 50),
             pre_normalized=[False, True],
@@ -146,7 +146,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
 
         self.assertTrue(
             test_acc >= 0.985,
-            f"MNIST --> Random Gen result: {test_acc:.2f}%"
+            f"MNIST --> Random Gen result: {test_acc*100:.3f}%"
         )
         self.assertTrue(
             elapsed_time <= 1.15 * param_gen.max_seconds,
