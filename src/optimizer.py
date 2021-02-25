@@ -14,7 +14,7 @@ import time
 import os
 import torch
 import logging
-from modules.parameter_generator import ParameterGenerator
+from src.parameter_generator import ParameterGenerator
 from enum import Enum
 
 
@@ -316,14 +316,14 @@ def multi_gpo_precessing(
 
 
 if __name__ == '__main__':
-    from modules.grid_search import GridHpSearch
-    from modules.random_search import RandomHpSearch
+    from src.grid_search import GridHpSearch
+    from src.random_search import RandomHpSearch
     from tests.pytorch_items.pytorch_datasets import get_MNIST_X_y, get_Cifar10_X_y
     import time
     from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
     import numpy as np
 
-    from modules.logging_tools import logs_file_setup, log_device_setup, DeepLib
+    from src.logging_tools import logs_file_setup, log_device_setup, DeepLib
 
     logs_file_setup(__file__)
     log_device_setup(DeepLib.Pytorch)

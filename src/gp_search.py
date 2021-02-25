@@ -12,7 +12,7 @@ import pandas as pd
 import time
 import os
 import logging
-from modules.parameter_generator import ParameterGenerator
+from src.parameter_generator import ParameterGenerator
 
 
 class GPOParamGen(ParameterGenerator):

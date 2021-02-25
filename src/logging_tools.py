@@ -46,7 +46,10 @@ def log_pytorch_device_setup():
     import torch
 
     logging.info(f'__pyTorch VERSION:{torch.__version__}')
-    logging.info(f'__CUDA VERSION:\n{check_output(["nvcc", "--version"]).decode("utf-8")}')
+    try:
+        logging.info(f'__CUDA VERSION:\n{check_output(["nvcc", "--version"]).decode("utf-8")}')
+    except FileNotFoundError:
+        logging.info('__CUDA VERSION:Not Found')
     logging.info(f'__CUDNN VERSION:{torch.backends.cudnn.version()}')
     logging.info(f'__Number CUDA Devices:{torch.cuda.device_count()}')
 
