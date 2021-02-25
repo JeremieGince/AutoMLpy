@@ -36,9 +36,9 @@
 # .idea/artifacts
 # .idea/compiler.xml
 # .idea/jarRepositories.xml
-# .idea/modules.xml
+# .idea/src.xml
 # .idea/*.iml
-# .idea/modules
+# .idea/src
 # *.iml
 # *.ipr
 
@@ -105,6 +105,6 @@ __pycache__/
 
 # fichiers de données trop gros
 views_docs.pkl
-modules/backbones/pickles/bags-of-words.pkl
+src/backbones/pickles/bags-of-words.pkl
 /venv/
 tests/parameter_generators_data/RandomHpSearch/temp
