@@ -1,5 +1,5 @@
 import unittest
-from modules.random_search import RandomHpSearch
+from src.random_search import RandomHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 from tests.pytorch_items.pytorch_datasets import get_MNIST_X_y, get_Cifar10_X_y
 import time

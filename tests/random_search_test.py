@@ -1,6 +1,6 @@
 import unittest
 import time
-from modules.random_search import RandomHpSearch
+from src.random_search import RandomHpSearch
 
 
 class TestRandomHpSearch(unittest.TestCase):

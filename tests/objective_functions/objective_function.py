@@ -3,7 +3,7 @@ from typing import Tuple, Callable
 import matplotlib.pyplot as plt
 import numpy as np
 
-from modules.optimizer import HpOptimizer
+from src.optimizer import HpOptimizer
 
 
 def objective_function(x, y, **kwargs):
@@ -61,8 +61,8 @@ if __name__ == '__main__':
     import dash_core_components as dcc
     import dash_html_components as html
     import time
-    from modules.random_search import RandomHpSearch
-    from modules.grid_search import GridHpSearch
+    from src.random_search import RandomHpSearch
+    from src.grid_search import GridHpSearch
     import os
 
     # ----------------- Initialization -------------------- #

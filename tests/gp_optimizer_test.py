@@ -1,5 +1,5 @@
 import unittest
-from modules.random_search import RandomHpSearch
+from src.random_search import RandomHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 import time
 import numpy as np

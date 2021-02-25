@@ -1,4 +1,4 @@
-from modules.optimizer import HpOptimizer
+from src.optimizer import HpOptimizer
 from tests.pytorch_items.pytorch_models import CifarNet, MnistNet, CifarNetBatchNorm
 import poutyne as pt
 import time

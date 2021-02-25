@@ -1,5 +1,5 @@
 import unittest
-from modules.grid_search import GridHpSearch
+from src.grid_search import GridHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 from tests.pytorch_datasets import get_MNIST_X_y, get_Cifar10_X_y
 import time
