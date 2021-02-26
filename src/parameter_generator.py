@@ -15,6 +15,7 @@ import os
 import logging
 import plotly.graph_objects as go
 import json
+import warnings
 
 # ------- App Server -------- #
 import dash
@@ -124,7 +125,7 @@ class ParameterGenerator:
         """
         raise NotImplementedError()
 
-    def get_best_param(self) -> Dict[str, Union[int, float]]:
+    def get_best_param(self, **kwargs) -> Dict[str, Union[int, float]]:
         """
         Get the best predicted parameters with the current exploration.
         """
@@ -132,10 +133,10 @@ class ParameterGenerator:
             raise ValueError("get_best_param must be called after an optimisation")
         return max(self.history, key=lambda t: t[-1])[0]
 
-    def get_best_params_repr(self) -> str:
+    def get_best_params_repr(self, **kwargs) -> str:
         if len(self.history) > 0:
             predicted_best_param_repr = ""
-            for k, v in self.get_best_param().items():
+            for k, v in self.get_best_param(**kwargs).items():
                 if isinstance(v, float):
                     predicted_best_param_repr += f"\t{k}: {v:.3f}\n"
                 else:
@@ -154,9 +155,9 @@ class ParameterGenerator:
         score: The associated score of the trial parameters.
         """
         self.history.append((param, score))
-        for p_name in param:
-            if p_name in self._param_name_to_idx:
-                param[p_name] = self._param_name_to_idx[p_name][param[p_name]]
+        # for p_name in param:
+        #     if p_name in self._param_name_to_idx:
+        #         param[p_name] = self._param_name_to_idx[p_name][param[p_name]]
 
     def add_conversion_tables_param_name_to_idx(self, param_name: str, values: Iterable) -> Dict[Hashable, int]:
         """
@@ -245,9 +246,12 @@ class ParameterGenerator:
         """
         Show the expectation of hp-space.
         """
+        raise DeprecationWarning("Use write_optimization_to_html instead")
         pass
 
     def start_graph_server(self, **kwargs):
+        raise DeprecationWarning("Use write_optimization_to_html instead")
+
         if self.app_thread is not None:
             return
 
@@ -319,7 +323,7 @@ class ParameterGenerator:
         fig.update_yaxes(title="Score [-]")
         return fig
 
-    def _compute_x_y_dict(self, **kwargs):
+    def _compute_x_y_dict(self, **kwargs) -> Dict:
         x_y_dict = {p_name: dict() for p_name in self._values_names}
 
         for p_name in x_y_dict:
@@ -333,9 +337,7 @@ class ParameterGenerator:
             x_y_dict[p_name] = dict(x=x, y=y)
         return x_y_dict
 
-    def write_optimization_to_html(self, **kwargs):
-        x_y_dict = self._compute_x_y_dict(**kwargs)
-
+    def _init_html_fig(self, x_y_dict: Dict, **kwargs) -> go.Figure:
         fig = go.Figure()
 
         fig.add_trace(
@@ -357,7 +359,7 @@ class ParameterGenerator:
             # height=750,
             autosize=True,
             margin=dict(t=150, b=150, l=150, r=150),
-            template="plotly_dark",
+            template="plotly_dark" if kwargs.get("dark_mode", True) else "seaborn",
         )
 
         # Update 3D scene options
@@ -366,6 +368,9 @@ class ParameterGenerator:
             aspectmode="manual"
         )
 
+        return fig
+
+    def _update_layout_html_fig_(self, fig, x_y_dict, **kwargs):
         # Add dropdown
         fig.update_layout(
             updatemenus=[
@@ -406,12 +411,19 @@ class ParameterGenerator:
                 dict(text="Hyper-parameter:", showarrow=False,
                      x=0.89, y=1.1, xref="paper", yref="paper", align="left",
                      xanchor="right", yanchor="middle"),
-                dict(text=f"Predicted best hyper-parameters: {self.get_best_params_repr()}",
+                dict(text=f"Predicted best hyper-parameters:"
+                          f" {self.get_best_params_repr(**kwargs.get('get_best_param_kwargs', {}))}",
                      showarrow=False,
                      x=0.1, y=-0.1, xref="paper", yref="paper", align="left",
                      xanchor="left", yanchor="top")
             ]
         )
+
+    def write_optimization_to_html(self, **kwargs):
+        x_y_dict = self._compute_x_y_dict(**kwargs)
+        fig = self._init_html_fig(x_y_dict, **kwargs)
+
+        self._update_layout_html_fig_(fig, x_y_dict, **kwargs)
 
         self.save_html_fig(fig, **kwargs)
         if kwargs.get("show", True):
