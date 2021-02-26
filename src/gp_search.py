@@ -15,7 +15,7 @@ import logging
 from src.parameter_generator import ParameterGenerator
 
 
-class GPOParamGen(ParameterGenerator):
+class GPOHpSearch(ParameterGenerator):
     def __init__(self,
                  values_dict: Union[Dict[Union[int, str], List[Union[int, float]]],
                                     Dict[Union[int, str], Iterable]],
@@ -50,7 +50,7 @@ class GPOParamGen(ParameterGenerator):
         self.y (List): List of associated score of the trial hp (self.X).
         self.gpr (GaussianProcessRegressor): The gpr used to make the predictions.
         """
-        super(GPOParamGen, self).__init__(values_dict, **kwargs)
+        super(GPOHpSearch, self).__init__(values_dict, **kwargs)
 
         self.xi = kwargs.get("xi", 0.1)
         self.Lambda = kwargs.get("Lambda", 1.0)
@@ -91,16 +91,18 @@ class GPOParamGen(ParameterGenerator):
                 t_param[p_name] = self._param_idx_to_name[p_name][t_param[p_name]]
         return t_param
 
-    def get_best_param(self):
+    def get_best_param(self, **kwargs):
         """
         Get the best predicted parameters with the current exploration.
         """
         f_hat = self.gpr.predict(self.xx)
-        b_param = self.xx[np.argmax(f_hat)]
-        b_params = {self._values_names[i]: b_param[i] for i in range(len(b_param))}
-        for p_name in b_params:
-            if p_name in self._param_idx_to_name:
-                b_params[p_name] = self._param_idx_to_name[p_name][b_params[p_name]]
+        if kwargs.get("from_history", True):
+            f_hat_max = np.max(f_hat)
+            history_max = max(self.history, key=lambda t: t[-1])
+            if history_max[1] >= f_hat_max:
+                return history_max[0]
+        b_sub_space = self.xx[np.argmax(f_hat)]
+        b_params = self.convert_subspace_to_param(b_sub_space)
         return b_params
 
     def add_score_info(self, param, score):
