@@ -12,13 +12,18 @@ class TestRandomHpOptimizerObjFunc(unittest.TestCase):
         obj_func_hp_optimizer = ObjectiveFuncHpOptimizer()
         param_gen = RandomHpSearch(obj_func_hp_optimizer.hp_space, max_seconds=60, max_itr=1_000)
 
+        save_kwargs = dict(
+            save_name=f"obj_func_hp_opt",
+            title="Random search: Objective function",
+        )
+
         start_time = time.time()
         param_gen = obj_func_hp_optimizer.optimize(
             param_gen,
             np.ones((2, 2)),
             np.ones((2, 2)),
             n_splits=2,
-            save_kwargs=dict(save_name=f"obj_func_hp_opt"),
+            save_kwargs=save_kwargs,
         )
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -28,10 +33,10 @@ class TestRandomHpOptimizerObjFunc(unittest.TestCase):
         test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp),
                                                   x0=opt_hp["x0"], x1=opt_hp["x1"])
 
-        param_gen.write_optimization_to_html(show=True, save_name="obj_func", title="Objective function")
+        param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
-        self.assertTrue(test_acc >= 0.9, f"objective_func --> Random Gen result: {test_acc:.2f}%"
-                                         f" in {elapsed_time:.2f} [s]")
+        self.assertTrue(test_acc >= 0.99, f"objective_func --> Random Gen result: {test_acc*100:.3f}%"
+                                          f" in {elapsed_time:.2f} [s]")
         self.assertTrue(elapsed_time <= 1.1*param_gen.max_seconds)
         self.assertTrue(param_gen.current_itr <= param_gen.max_itr)
 
@@ -54,13 +59,18 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
         )
         param_gen = RandomHpSearch(hp_space, max_seconds=60 * 60 * 1, max_itr=1_000)
 
+        save_kwargs = dict(
+            save_name=f"cifar10_hp_opt",
+            title="Random search: Cifar10",
+        )
+
         start_time = time.time()
         param_gen = cifar10_hp_optimizer.optimize(
             param_gen,
             cifar10_X_y_dict["train"]["x"],
             cifar10_X_y_dict["train"]["y"],
             n_splits=2,
-            save_kwargs=dict(save_name=f"cifar10_hp_opt"),
+            save_kwargs=save_kwargs,
         )
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -82,7 +92,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
             **opt_hp
         )
 
-        param_gen.write_optimization_to_html(show=True, save_name="cifar10", title="Cifar10")
+        param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
         self.assertTrue(
             test_acc >= 0.7,
@@ -114,13 +124,18 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
         )
         param_gen = RandomHpSearch(hp_space, max_seconds=60*60*1, max_itr=1_000)
 
+        save_kwargs = dict(
+            save_name=f"mnist_hp_opt",
+            title="Random search: MNIST",
+        )
+
         start_time = time.time()
         param_gen = mnist_hp_optimizer.optimize(
             param_gen,
             mnist_X_y_dict["train"]["x"],
             mnist_X_y_dict["train"]["y"],
             n_splits=2,
-            save_kwargs=dict(save_name=f"mnist_hp_opt"),
+            save_kwargs=save_kwargs,
         )
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -142,7 +157,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
             **opt_hp
         )
 
-        param_gen.write_optimization_to_html(show=True, save_name="mnist", title="MNIST")
+        param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
         self.assertTrue(
             test_acc >= 0.985,
