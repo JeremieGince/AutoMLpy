@@ -129,7 +129,7 @@ class HpOptimizer:
         if verbose:
             progress.close()
         param_gen.save_best_param(**save_kwargs)
-        param_gen.show_expectation(show=False, **save_kwargs)
+        param_gen.write_optimization_to_html(show=False, **save_kwargs)
         return param_gen
 
 
@@ -153,7 +153,7 @@ def optimize_parameters(
     Parameters
     ----------
     model_cls: A class model. Must have the following implemented methods:
-                -> __init__(*model_cls_args, **params)
+                -> __init__(*model_cls_args, **x)
     X: The training data.
     y: The training labels.
     param_gen: The parameter generator.
@@ -256,7 +256,7 @@ def multi_gpo_precessing(
     Parameters
     ----------
     model_cls: A class model. Must have the following implemented methods:
-                -> __init__(*model_cls_args, **params)
+                -> __init__(*model_cls_args, **x)
     X: The training data.
     y: The training label.
     param_gens: List of the parameter generator.
