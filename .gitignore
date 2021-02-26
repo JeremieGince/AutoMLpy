@@ -108,3 +108,4 @@ views_docs.pkl
 src/backbones/pickles/bags-of-words.pkl
 /venv/
 tests/parameter_generators_data/RandomHpSearch/temp
+**temp
