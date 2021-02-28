@@ -1,6 +1,7 @@
 import unittest
-from src.grid_search import GridHpSearch
+from src.parameter_generators.grid_search import GridHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
+from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 from tests.pytorch_items.pytorch_datasets import get_MNIST_X_y, get_Cifar10_X_y
 import time
 from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
@@ -36,6 +37,41 @@ class TestGridHpOptimizerObjFunc(unittest.TestCase):
         param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
         self.assertTrue(test_acc >= 0.99, f"objective_func --> Grid search result: {test_acc*100:.3f}%"
+                                          f" in {elapsed_time:.2f} [s]")
+        self.assertTrue(elapsed_time <= 1.1*param_gen.max_seconds)
+        self.assertTrue(param_gen.current_itr <= param_gen.max_itr)
+
+    def test_vectorized_optimize_objective_func(self):
+        np.random.seed(42)
+
+        obj_func_hp_optimizer = VectorizedObjectiveFuncHpOptimizer()
+        obj_func_hp_optimizer.set_dim(3)
+        _ = obj_func_hp_optimizer.build_model()
+        param_gen = GridHpSearch(obj_func_hp_optimizer.hp_space, max_seconds=60*15, max_itr=10_000)
+
+        save_kwargs = dict(
+            save_name=f"vec_obj_func_hp_opt",
+            title="Grid search: Vectorized objective function",
+        )
+
+        start_time = time.time()
+        param_gen = obj_func_hp_optimizer.optimize(
+            param_gen,
+            np.ones((2, 2)),
+            np.ones((2, 2)),
+            n_splits=2,
+            save_kwargs=save_kwargs,
+        )
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        opt_hp = param_gen.get_best_param()
+
+        test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp), **opt_hp)
+
+        param_gen.write_optimization_to_html(show=True, **save_kwargs)
+
+        self.assertTrue(test_acc >= 0.99, f"Vectorized objective_func --> Grid search result: {test_acc*100:.3f}%"
                                           f" in {elapsed_time:.2f} [s]")
         self.assertTrue(elapsed_time <= 1.1*param_gen.max_seconds)
         self.assertTrue(param_gen.current_itr <= param_gen.max_itr)
