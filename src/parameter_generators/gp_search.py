@@ -1,10 +1,13 @@
+import os
+from typing import Dict, Union, List, Iterable, Tuple
+
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.graph_objects as go
 from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
-from typing import Dict, Union, List, Iterable, Tuple
-import os
+
 from src.parameter_generators.parameter_generator import ParameterGenerator
 
 
@@ -149,7 +152,7 @@ class GPOHpSearch(ParameterGenerator):
         fig.suptitle(f"{kwargs.get('title', '')}", fontsize=16)
         for i, param_name in enumerate(bounds_to_plot):
             subfig = subfigs_list[i]
-            _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y) = self.get_expectation_of_param(param_name)
+            _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y) = self._compute_expectation_of_param(param_name)
             x_dim = np.unique(raw_x_dim)
             subfig.plot(_x, mean_dim_f_hat)
             subfig.plot(raw_x_dim, raw_y, 'x')
@@ -189,7 +192,7 @@ class GPOHpSearch(ParameterGenerator):
         }
         """
         assert param_name in self._values_names
-        _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y) = self.get_expectation_of_param(param_name)
+        _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y) = self._compute_expectation_of_param(param_name)
         x_dim = np.unique(raw_x_dim)
 
         plt.figure(1)
@@ -209,8 +212,8 @@ class GPOHpSearch(ParameterGenerator):
         plt.savefig(f"{fig_dir}/{kwargs.get('save_name', 'expectation.png')}", dpi=300)
         plt.show()
 
-    def get_expectation_of_param(self, param_name: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray,
-                                                                 Tuple[np.ndarray, np.ndarray]]:
+    def _compute_expectation_of_param(self, param_name: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray,
+                                                                      Tuple[np.ndarray, np.ndarray]]:
         """
         Get the expectation of hp-space.
 
@@ -238,3 +241,47 @@ class GPOHpSearch(ParameterGenerator):
 
         raw_x_dim, raw_y = np.array(self.X)[:, dim], np.array(self.y)
         return _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y)
+
+    def _init_html_fig(self, x_y_dict: Dict, **kwargs) -> go.Figure:
+        fig = super(GPOHpSearch, self)._init_html_fig(x_y_dict, **kwargs)
+
+        expectation_of_params = {}
+
+        for p in self._values_names:
+            _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y) = self._compute_expectation_of_param(p)
+            x_dim = np.unique(raw_x_dim)
+            expectation_of_params[p] = dict(
+                _x=_x,
+                mean_dim_f_hat=mean_dim_f_hat,
+                mean_dim_std_hat=mean_dim_std_hat,
+                raw_x_dim=raw_x_dim,
+                raw_y=raw_y,
+                x_dim=x_dim,
+            )
+
+        # Mean
+        fig.add_trace(
+            go.Scatter(x=expectation_of_params[self._values_names[0]]['_x'],
+                       y=expectation_of_params[self._values_names[0]]['mean_dim_f_hat'],
+                       mode='lines',
+                       name="Mean expectation",
+                       line=dict(width=0.5, color='rgba(255, 0, 0, 1.0)'), ),
+        )
+        # Std
+        fig.add_trace(
+            go.Scatter(
+                x=list(expectation_of_params[self._values_names[0]]['_x'])
+                  + list(expectation_of_params[self._values_names[0]]['_x'])[::-1],
+                y=list(expectation_of_params[self._values_names[0]]['mean_dim_f_hat']
+                       - expectation_of_params[self._values_names[0]]['mean_dim_std_hat'])
+                  + list(expectation_of_params[self._values_names[0]]['mean_dim_f_hat']
+                         + expectation_of_params[self._values_names[0]]['mean_dim_std_hat'])[::-1],
+                mode='lines',
+                fill="toself",
+                fillcolor='rgba(255, 0, 0, 0.05)',
+                name="Std expectation",
+                line=dict(width=0.0),
+            )
+        )
+
+        return fig
