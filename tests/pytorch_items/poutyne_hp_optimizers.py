@@ -1,13 +1,12 @@
-from src.optimizer import HpOptimizer
+from src.optimizers.optimizer import HpOptimizer
 from tests.pytorch_items.pytorch_models import CifarNet, MnistNet, CifarNetBatchNorm
 import poutyne as pt
-import time
 import pandas as pd
 import torch
 import torch.optim as optim
 from torch.utils.data import Subset,  DataLoader, TensorDataset
 from torchvision.transforms import ToTensor
-from typing import Dict, Union, List, Iterable, Hashable, Tuple
+from typing import Union, Tuple
 import numpy as np
 from torchvision.datasets.mnist import MNIST
 
@@ -149,7 +148,7 @@ class PoutyneCifar10HpOptimizer(HpOptimizer):
 
 
 if __name__ == '__main__':
-    from tests.pytorch_items.pytorch_datasets import get_MNIST_X_y, get_Cifar10_X_y
+    from tests.pytorch_items.pytorch_datasets import get_Cifar10_X_y
 
     hp = dict(
         epochs=15,
