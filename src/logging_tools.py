@@ -1,4 +1,5 @@
 import enum
+import logging
 
 
 class DeepLib(enum.Enum):
@@ -8,8 +9,7 @@ class DeepLib(enum.Enum):
     SkLearn = 2
 
 
-def logs_file_setup(file: str):
-    import logging
+def logs_file_setup(file: str, level=logging.INFO):
     import os
     import sys
     import time
@@ -20,13 +20,12 @@ def logs_file_setup(file: str):
     logs_dir = f"logs/logs-{today.strftime('%d-%m-%Y')}"
     logs_file = f'{logs_dir}/{os.path.splitext(os.path.basename(file))[0]}-{timestamp}.log'
     os.makedirs(logs_dir, exist_ok=True)
-    logging.basicConfig(filename=logs_file, filemode='w+', level=logging.INFO)
+    logging.basicConfig(filename=logs_file, filemode='w+', level=level)
     sh = logging.StreamHandler(sys.stdout)
     logging.getLogger().addHandler(sh)
 
 
 def log_device_setup(deepLib: DeepLib = DeepLib.Null):
-    import logging
     import sys
 
     logging.info(f'__Python VERSION:{sys.version}')
@@ -41,7 +40,6 @@ def log_device_setup(deepLib: DeepLib = DeepLib.Null):
 
 
 def log_pytorch_device_setup():
-    import logging
     from subprocess import check_output
     import torch
 
