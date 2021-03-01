@@ -9,14 +9,14 @@ class RandomHpSearch(ParameterGenerator):
                                     Dict[Union[int, str], Iterable]],
                  **kwargs):
         """
-        Used to generate the hyper-parameter (hp) space, generate random trial parameter for the exploration and get the
-        best set of hp of the hp space according to the current exploration.
+        Used to generate the hyper-parameter (hp) score_space, generate random trial parameter for the exploration and get the
+        best set of hp of the hp score_space according to the current exploration.
 
         Parameters
         ----------
         values_dict:
             A dictionary which contained all the possible values of each hyper-parameter
-            used to generate the exploring space.
+            used to generate the exploring score_space.
         kwargs: {
                     xi (float): Exploration parameter. Must be in [0, 1]. default: 0.1.
                     Lambda (float): Default: 1.0.
