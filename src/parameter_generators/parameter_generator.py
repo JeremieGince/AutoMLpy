@@ -42,14 +42,14 @@ class ParameterGenerator:
                  values_dict: Dict[Union[int, str], Iterable[Union[int, float]]],
                  **kwargs):
         """
-        Used to generate the hyper-parameter (hp) space, generate trial parameter for the exploration and get the best
-        set of hp of the hp space according to the current exploration.
+        Used to generate the hyper-parameter (hp) score_space, generate trial parameter for the exploration and get the best
+        set of hp of the hp score_space according to the current exploration.
 
         Parameters
         ----------
         values_dict:
             A dictionary which contained all the possible values of each hyper-parameter
-            used to generate the exploring space.
+            used to generate the exploring score_space.
         kwargs: {
 
         }
@@ -79,7 +79,7 @@ class ParameterGenerator:
                 self.add_conversion_tables_param_name_to_idx(p, values_dict[p])
                 values_dict[p] = self.convert_param_to_idx(p, values_dict[p])
 
-        # ------- Hp space -------- #
+        # ------- Hp score_space -------- #
         self.xx = np.meshgrid(*[values_dict[p] for p in self._values_names])
         self.xx = np.array(list(zip(*[_x.ravel() for _x in self.xx])))
 
@@ -227,7 +227,7 @@ class ParameterGenerator:
 
     def convert_subspace_to_param(self, sub_space: np.ndarray) -> Dict[Union[str, int], object]:
         """
-        Convert a subspace of space self.xx to a set of parameters.
+        Convert a subspace of score_space self.xx to a set of parameters.
         Parameters
         ----------
         sub_space: the subspace of self.xx. ex: self.xx[int]
@@ -261,7 +261,7 @@ class ParameterGenerator:
 
     def show_expectation(self, **kwargs) -> None:
         """
-        Show the expectation of hp-space.
+        Show the expectation of hp-score_space.
         """
         logging.error(DeprecationWarning("Use write_optimization_to_html instead"))
         pass
@@ -336,7 +336,7 @@ class ParameterGenerator:
             template="plotly_white",
         )
 
-        fig.update_xaxes(title=f"{parameter_name}: parameter space [-]")
+        fig.update_xaxes(title=f"{parameter_name}: parameter score_space [-]")
         fig.update_yaxes(title="Score [-]")
         return fig
 
@@ -367,7 +367,7 @@ class ParameterGenerator:
                        ),
         )
 
-        fig.update_xaxes(title=f"{self._values_names[0]}: parameter space [-]")
+        fig.update_xaxes(title=f"{self._values_names[0]}: parameter score_space [-]")
         fig.update_yaxes(title="Score [-]")
 
         fig.update_layout(
@@ -387,7 +387,7 @@ class ParameterGenerator:
 
         return fig
 
-    def _update_layout_html_fig_(self, fig, x_y_dict, **kwargs):
+    def _add_dropdown_html_fig_(self, fig, x_y_dict, **kwargs):
         # Add dropdown
         fig.update_layout(
             updatemenus=[
@@ -402,7 +402,7 @@ class ParameterGenerator:
                                 ),
                                 {
                                     # "title": f"{p_name}",
-                                    "xaxis.title.text": f"{p_name}: parameter space [-]",
+                                    "xaxis.title.text": f"{p_name}: parameter score_space [-]",
                                     "yaxis.title.text": "Score [-]",
                                 }
                             ],
@@ -422,7 +422,7 @@ class ParameterGenerator:
             ]
         )
 
-        # Add annotation
+    def _add_annotations_to_html_fig_(self, fig, x_y_dict, **kwargs):
         fig.update_layout(
             annotations=[
                 dict(text="Hyper-parameter:", showarrow=False,
@@ -440,7 +440,8 @@ class ParameterGenerator:
         x_y_dict = self._compute_x_y_dict(**kwargs)
         fig = self._init_html_fig(x_y_dict, **kwargs)
 
-        self._update_layout_html_fig_(fig, x_y_dict, **kwargs)
+        self._add_dropdown_html_fig_(fig, x_y_dict, **kwargs)
+        self._add_annotations_to_html_fig_(fig, x_y_dict, **kwargs)
 
         self.save_html_fig(fig, **kwargs)
         if kwargs.get("show", True):
@@ -451,8 +452,11 @@ class ParameterGenerator:
     def save_html_fig(self, fig, **kwargs):
         save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/html_files/")
         os.makedirs(save_dir, exist_ok=True)
+
+        path = f"{save_dir}/{self.default_save_name}-{kwargs.get('save_name', '')}.html"
         if kwargs.get("save", True):
-            fig.write_html(f"{save_dir}/{self.default_save_name}-{kwargs.get('save_name', '')}.html")
+            logging.info(f"Saving html fig to {path}")
+            fig.write_html(path)
 
     def save_best_param(self, **kwargs):
         save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/optimal_hp/")
