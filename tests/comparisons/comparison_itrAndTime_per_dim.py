@@ -8,6 +8,7 @@ import os
 from src.tools import plotly_colors
 import logging
 
+
 def compute_stats_per_dimension_table(
         max_dim: int = 10,
         iterations_per_dim: int = 10,
@@ -179,7 +180,7 @@ if __name__ == '__main__':
     logs_file_setup(__file__, level=logging.INFO)
     log_device_setup()
 
-    iterations_results, time_results = show_stats_per_dimension(2, 2, stop_criterion=0.7)
+    iterations_results, time_results = show_stats_per_dimension(3, 5, stop_criterion=0.9)
 
     # --------------------------------------------------------------------------------- #
     #                      Iteration per Dimension results                              #
