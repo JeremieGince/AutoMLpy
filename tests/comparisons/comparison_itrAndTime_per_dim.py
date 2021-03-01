@@ -6,7 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 import os
 from src.tools import plotly_colors
-
+import logging
 
 def compute_stats_per_dimension_table(
         max_dim: int = 10,
@@ -176,8 +176,6 @@ def show_stats_per_dimension(
 
 
 if __name__ == '__main__':
-    import logging
-
     logs_file_setup(__file__, level=logging.INFO)
     log_device_setup()
 
