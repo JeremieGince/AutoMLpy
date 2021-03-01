@@ -19,6 +19,6 @@ class GridHpSearch(ParameterGenerator):
 
     @ParameterGenerator.Decorators.increment_counters
     def get_trial_param(self):
+        self.idx = self.current_itr % len(self.xx)
         t_param = self.convert_subspace_to_param(self.xx[self.idx])
-        self.idx = (self.current_itr + 1) % len(self)
         return t_param
