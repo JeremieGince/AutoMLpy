@@ -17,14 +17,14 @@ class GPOHpSearch(ParameterGenerator):
                                     Dict[Union[int, str], Iterable]],
                  **kwargs):
         """
-        Used to generate the hyper-parameter (hp) space, generate trial parameter for the exploration and get the best
-        set of hp of the hp space according to the current exploration.
+        Used to generate the hyper-parameter (hp) score_space, generate trial parameter for the exploration and get the best
+        set of hp of the hp score_space according to the current exploration.
 
         Parameters
         ----------
         values_dict:
             A dictionary which contained all the possible values of each hyper-parameter
-            used to generate the exploring space.
+            used to generate the exploring score_space.
         kwargs: {
                     xi (float): Exploration parameter. Must be in [0, 1]. default: 0.1.
                     Lambda (float): Default: 1.0.
@@ -39,7 +39,7 @@ class GPOHpSearch(ParameterGenerator):
         self._param_name_to_idx (Dict[str, int]) : Dict container for string bounds element used to convert str to idx.
         self._param_idx_to_name (Dict[int, str]) : Dict container for string bounds element used to convert back idx
                                                    to str.
-        self.xx (np.ndarray): Observation space.
+        self.xx (np.ndarray): Observation score_space.
         self.current_itr (int): Current iteration of the gpo.
         self.start_time (int): Starting time of the optimisation.
         self.X (List): List of the trial hp.
@@ -54,6 +54,9 @@ class GPOHpSearch(ParameterGenerator):
 
         self.X, self.y = [], []
         self.gpr = GaussianProcessRegressor(RBF(length_scale=self.bandwidth), alpha=self.Lambda, optimizer=None)
+
+        # --------- html data --------- #
+        self._expectation_of_params = {}
 
     def reset(self) -> None:
         """
@@ -114,7 +117,7 @@ class GPOHpSearch(ParameterGenerator):
 
     def expected_improvement(self) -> np.ndarray:
         """
-        Returned the expected improvement of the search space.
+        Returned the expected improvement of the search score_space.
         """
         f_hat = self.gpr.predict(np.array(self.X))
         best_f = np.max(f_hat)
@@ -128,7 +131,7 @@ class GPOHpSearch(ParameterGenerator):
 
     def show_expectation(self, **kwargs):
         """
-        Show the expectation of hp-space.
+        Show the expectation of hp-score_space.
 
         Parameters
         ----------
@@ -162,7 +165,7 @@ class GPOHpSearch(ParameterGenerator):
             if param_name in self._param_idx_to_name:
                 subfig.set_xticks(list(range(len(x_dim))))
                 subfig.set_xticklabels(self.convert_idx_to_param(param_name, x_dim))
-            subfig.set_xlabel("hp space [-]")
+            subfig.set_xlabel("hp score_space [-]")
             subfig.set_ylabel("Expected score [-]")
             subfig.set_title(f"EI of {param_name}")
             j = i
@@ -179,7 +182,7 @@ class GPOHpSearch(ParameterGenerator):
 
     def show_expectation_of_param(self, param_name: str, **kwargs):
         """
-        Show the expectation of hp-space.
+        Show the expectation of hp-score_space.
 
         Parameters
         ----------
@@ -203,7 +206,7 @@ class GPOHpSearch(ParameterGenerator):
 
         if param_name in self._param_idx_to_name:
             plt.xticks(list(range(len(x_dim))), self.convert_idx_to_param(param_name, x_dim))
-        plt.xlabel("hp space [-]")
+        plt.xlabel("hp score_space [-]")
         plt.ylabel("Expected score [-]")
         plt.title(f"EI of {param_name}")
 
@@ -215,13 +218,13 @@ class GPOHpSearch(ParameterGenerator):
     def _compute_expectation_of_param(self, param_name: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray,
                                                                       Tuple[np.ndarray, np.ndarray]]:
         """
-        Get the expectation of hp-space.
+        Get the expectation of hp-score_space.
 
-        _x (np.ndarray): The space of the given parameter.
-        mean_dim_f_hat (np.ndarray): Predicted score of the given hp space.
-        mean_dim_std_hat (np.ndarray): Predicted score std of the given hp space.
-        raw_x_dim (np.ndarray): X trial space of the given parameter.
-        raw_y (np.ndarray): Score of the trial space of the given parameter.
+        _x (np.ndarray): The score_space of the given parameter.
+        mean_dim_f_hat (np.ndarray): Predicted score of the given hp score_space.
+        mean_dim_std_hat (np.ndarray): Predicted score std of the given hp score_space.
+        raw_x_dim (np.ndarray): X trial score_space of the given parameter.
+        raw_y (np.ndarray): Score of the trial score_space of the given parameter.
 
         Parameters
         ----------
@@ -245,12 +248,12 @@ class GPOHpSearch(ParameterGenerator):
     def _init_html_fig(self, x_y_dict: Dict, **kwargs) -> go.Figure:
         fig = super(GPOHpSearch, self)._init_html_fig(x_y_dict, **kwargs)
 
-        expectation_of_params = {}
+        self._expectation_of_params = {}
 
         for p in self._values_names:
             _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y) = self._compute_expectation_of_param(p)
             x_dim = np.unique(raw_x_dim)
-            expectation_of_params[p] = dict(
+            self._expectation_of_params[p] = dict(
                 _x=_x,
                 mean_dim_f_hat=mean_dim_f_hat,
                 mean_dim_std_hat=mean_dim_std_hat,
@@ -261,8 +264,8 @@ class GPOHpSearch(ParameterGenerator):
 
         # Mean
         fig.add_trace(
-            go.Scatter(x=expectation_of_params[self._values_names[0]]['_x'],
-                       y=expectation_of_params[self._values_names[0]]['mean_dim_f_hat'],
+            go.Scatter(x=self._expectation_of_params[self._values_names[0]]['_x'],
+                       y=self._expectation_of_params[self._values_names[0]]['mean_dim_f_hat'],
                        mode='lines',
                        name="Mean expectation",
                        line=dict(width=0.5, color='rgba(255, 0, 0, 1.0)'), ),
@@ -270,12 +273,12 @@ class GPOHpSearch(ParameterGenerator):
         # Std
         fig.add_trace(
             go.Scatter(
-                x=list(expectation_of_params[self._values_names[0]]['_x'])
-                  + list(expectation_of_params[self._values_names[0]]['_x'])[::-1],
-                y=list(expectation_of_params[self._values_names[0]]['mean_dim_f_hat']
-                       - expectation_of_params[self._values_names[0]]['mean_dim_std_hat'])
-                  + list(expectation_of_params[self._values_names[0]]['mean_dim_f_hat']
-                         + expectation_of_params[self._values_names[0]]['mean_dim_std_hat'])[::-1],
+                x=list(self._expectation_of_params[self._values_names[0]]['_x'])
+                  + list(self._expectation_of_params[self._values_names[0]]['_x'])[::-1],
+                y=list(self._expectation_of_params[self._values_names[0]]['mean_dim_f_hat']
+                       - self._expectation_of_params[self._values_names[0]]['mean_dim_std_hat'])
+                  + list(self._expectation_of_params[self._values_names[0]]['mean_dim_f_hat']
+                         + self._expectation_of_params[self._values_names[0]]['mean_dim_std_hat'])[::-1],
                 mode='lines',
                 fill="toself",
                 fillcolor='rgba(255, 0, 0, 0.05)',
@@ -284,4 +287,57 @@ class GPOHpSearch(ParameterGenerator):
             )
         )
 
+        fig.update_layout(legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01
+        ))
+
         return fig
+
+    def _add_dropdown_html_fig_(self, fig, x_y_dict, **kwargs):
+        fig.update_layout(
+            updatemenus=[
+                dict(
+                    buttons=list([
+                        dict(
+                            args=[
+                                dict(
+                                    x=[
+                                        x_y_dict[p_name]['x'],
+                                        self._expectation_of_params[p_name]['_x'],
+                                        list(self._expectation_of_params[p_name]['_x'])
+                                        + list(self._expectation_of_params[p_name]['_x'])[::-1]
+                                    ],
+                                    y=[
+                                        x_y_dict[p_name]['y'],
+                                        self._expectation_of_params[p_name]['mean_dim_f_hat'],
+                                        list(self._expectation_of_params[p_name]['mean_dim_f_hat']
+                                             - self._expectation_of_params[p_name]['mean_dim_std_hat'])
+                                        + list(self._expectation_of_params[p_name]['mean_dim_f_hat']
+                                               + self._expectation_of_params[p_name]['mean_dim_std_hat'])[::-1]
+                                    ],
+                                    marker=dict(color=x_y_dict[p_name]['y'], showscale=True),
+                                ),
+                                {
+                                    # "title": f"{p_name}",
+                                    "xaxis.title.text": f"{p_name}: parameter score_space [-]",
+                                    "yaxis.title.text": "Score [-]",
+                                }
+                            ],
+                            label=p_name,
+                            method="update"
+                        )
+                        for p_name in self._values_names
+                    ]),
+                    direction="down",
+                    pad={"r": 10, "t": 10},
+                    showactive=True,
+                    x=0.9,
+                    xanchor="left",
+                    y=1.1,
+                    yanchor="middle"
+                ),
+            ]
+        )
