@@ -33,6 +33,7 @@ def execute_optimisation(
     save_kwargs = dict(
         save_name=f"vec_{dim}D_obj_func_hp_opt_seed{seed}",
         title=f"{search_type.name} search: {dim}D vectorized objective function",
+        dark_mode=kwargs.get("dark_mode", True),
     )
 
     param_gen = obj_func_hp_optimizer.optimize(
