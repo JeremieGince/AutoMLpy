@@ -33,6 +33,7 @@ def compute_stats_per_dimension_table(
                     dim=d,
                     optimize_kwargs=dict(stop_criterion=kwargs.get("stop_criterion", 0.9)),
                     seed=itr_seed,
+                    **kwargs
                 )
                 ell_itr.append(param_gen.current_itr)
                 ell_time.append(param_gen.last_itr_elapse_time)
@@ -123,7 +124,10 @@ def show_stats_per_dimension(
         title=kwargs.get("title", f"Iterations required to obtain a score of {kwargs['stop_criterion']}"),
         autosize=True,
         margin=dict(t=150, b=150, l=150, r=150),
-        template="seaborn",
+        template="plotly_dark" if kwargs.get("dark_mode", True) else "seaborn",
+        font=dict(
+            size=18,
+        )
     )
 
     # --------------------------------------------------------------------------------- #
@@ -180,7 +184,7 @@ if __name__ == '__main__':
     logs_file_setup(__file__, level=logging.INFO)
     log_device_setup()
 
-    iterations_results, time_results = show_stats_per_dimension(3, 5, stop_criterion=0.9)
+    iterations_results, time_results = show_stats_per_dimension(3, 5, stop_criterion=0.9, dark_mode=False)
 
     # --------------------------------------------------------------------------------- #
     #                      Iteration per Dimension results                              #
