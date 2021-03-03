@@ -336,7 +336,7 @@ class ParameterGenerator:
             template="plotly_white",
         )
 
-        fig.update_xaxes(title=f"{parameter_name}: parameter score_space [-]")
+        fig.update_xaxes(title=f"{parameter_name}: parameter space [-]")
         fig.update_yaxes(title="Score [-]")
         return fig
 
@@ -367,7 +367,7 @@ class ParameterGenerator:
                        ),
         )
 
-        fig.update_xaxes(title=f"{self._values_names[0]}: parameter score_space [-]")
+        fig.update_xaxes(title=f"{self._values_names[0]}: parameter space [-]")
         fig.update_yaxes(title="Score [-]")
 
         fig.update_layout(
@@ -377,6 +377,9 @@ class ParameterGenerator:
             autosize=True,
             margin=dict(t=150, b=150, l=150, r=150),
             template="plotly_dark" if kwargs.get("dark_mode", True) else "seaborn",
+            font=dict(
+                size=18,
+            )
         )
 
         # Update 3D scene options
@@ -402,7 +405,7 @@ class ParameterGenerator:
                                 ),
                                 {
                                     # "title": f"{p_name}",
-                                    "xaxis.title.text": f"{p_name}: parameter score_space [-]",
+                                    "xaxis.title.text": f"{p_name}: parameter space [-]",
                                     "yaxis.title.text": "Score [-]",
                                 }
                             ],
