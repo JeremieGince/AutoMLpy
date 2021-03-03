@@ -322,7 +322,7 @@ class GPOHpSearch(ParameterGenerator):
                                 ),
                                 {
                                     # "title": f"{p_name}",
-                                    "xaxis.title.text": f"{p_name}: parameter score_space [-]",
+                                    "xaxis.title.text": f"{p_name}: parameter space [-]",
                                     "yaxis.title.text": "Score [-]",
                                 }
                             ],
