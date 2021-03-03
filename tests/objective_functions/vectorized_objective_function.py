@@ -28,7 +28,7 @@ def vectorized_objective_function(x, **kwargs):
     omega_xx = np.array([omega[i]*x[i]**2 for i in range(x.shape[0])])
 
     cos_prod = np.prod(np.cos(omega_x), axis=0)
-    exp_prod = np.exp(np.sum(-omega_xx, axis=0))
+    exp_prod = np.exp(-np.sum(omega_xx, axis=0))
     return cos_prod*exp_prod + noise
 
 
@@ -117,8 +117,8 @@ if __name__ == '__main__':
         margin=dict(t=150, b=150, l=150, r=150),
         template="seaborn",
     )
-    fig.update_xaxes(title=f"x0: parameter sscore_space [-]")
-    fig.update_yaxes(title=f"x1: parameter sscore_space [-]")
+    fig.update_xaxes(title=f"x0: parameter space [-]")
+    fig.update_yaxes(title=f"x1: parameter space [-]")
     # fig.update_zaxes(title="Score [-]")
 
     # Add dropdown
@@ -135,8 +135,8 @@ if __name__ == '__main__':
                             ),
                             {
                                 # "title": f"{xi}-{xj}",
-                                "xaxis.title.text": f"{xi}: parameter sscore_space [-]",
-                                "yaxis.title.text": f"{xj}: parameter sscore_space [-]",
+                                "xaxis.title.text": f"{xi}: parameter space [-]",
+                                "yaxis.title.text": f"{xj}: parameter space [-]",
                                 "zaxis.title.text": "Score [-]",
                             }
                         ],
