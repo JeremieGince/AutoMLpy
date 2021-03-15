@@ -7,6 +7,8 @@ from src import logs_file_setup, log_device_setup, DeepLib
 def execute_optimisation(
         search_type: SearchType,
         dim: int = 3,
+        nb_workers: int = 1,
+        compute_delay: float = 0.0,
         param_search_kwargs: dict = None,
         optimize_kwargs: dict = None,
         **kwargs
@@ -23,6 +25,7 @@ def execute_optimisation(
 
     obj_func_hp_optimizer = VectorizedObjectiveFuncHpOptimizer()
     obj_func_hp_optimizer.set_dim(dim)
+    obj_func_hp_optimizer.set_compute_delay(compute_delay)
     _ = obj_func_hp_optimizer.build_model()
 
     param_gen = search_type_2_type[search_type](
@@ -41,6 +44,7 @@ def execute_optimisation(
         np.ones((2, 2)),
         np.ones((2, 2)),
         n_splits=2,
+        nb_workers=nb_workers,
         save_kwargs=save_kwargs,
         **optimize_kwargs,
     )
