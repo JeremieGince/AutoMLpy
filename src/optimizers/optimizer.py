@@ -107,7 +107,8 @@ class HpOptimizer:
                     param_gen.add_score_info(params, mean_score)
 
                     if verbose:
-                        logging.debug(f"\ntrial_params: {params} --> mean score: {mean_score:.3f}")
+                        logging.debug(f"param_gen: curr_itr: {param_gen.current_itr}")
+                        logging.debug(f"trial_params: {params} --> mean score: {mean_score:.3f}")
                         progress.set_postfix_str(f"mean_score: {mean_score:.2f}")
                         progress.update()
 
