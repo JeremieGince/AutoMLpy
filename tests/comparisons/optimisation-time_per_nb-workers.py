@@ -17,17 +17,21 @@ def compute_stats_per_workers_table(
         compute_delay: float = 1.0,
         **kwargs
 ):
-    columns = ["Workers", *[st.name for st in SearchType]]
+    debug_types = [SearchType.Random]
+    # columns = ["Workers", *[st.name for st in SearchType]]
+    columns = ["Workers", *[st.name for st in debug_types]]
     iterations_results = pd.DataFrame(columns=columns)
     time_results = pd.DataFrame(columns=columns)
 
     for w in range(1, max_workers+1):
         logging.info(f"\n{'-'*50} {w} Workers {'-'*50}")
-        new_iterations_results = {"Workers": w, **{st.name: [] for st in SearchType}}
-        new_time_results = {"Workers": w, **{st.name: [] for st in SearchType}}
+        # new_iterations_results = {"Workers": w, **{st.name: [] for st in SearchType}}
+        # new_time_results = {"Workers": w, **{st.name: [] for st in SearchType}}
+        new_iterations_results = {"Workers": w, **{st.name: [] for st in debug_types}}
+        new_time_results = {"Workers": w, **{st.name: [] for st in debug_types}}
 
         # for _search_type in SearchType:
-        for _search_type in [SearchType.Random]:
+        for _search_type in debug_types:
             logging.info(f"\n{'-'*10} {_search_type.name} search {'-'*10}")
             ell_itr = []
             ell_time = []
