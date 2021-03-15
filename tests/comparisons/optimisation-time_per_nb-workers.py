@@ -26,8 +26,8 @@ def compute_stats_per_workers_table(
         new_iterations_results = {"Workers": w, **{st.name: [] for st in SearchType}}
         new_time_results = {"Workers": w, **{st.name: [] for st in SearchType}}
 
-        for _search_type in SearchType:
-        # for _search_type in [SearchType.Random]:
+        # for _search_type in SearchType:
+        for _search_type in [SearchType.Random]:
             logging.info(f"\n{'-'*10} {_search_type.name} search {'-'*10}")
             ell_itr = []
             ell_time = []
@@ -60,25 +60,29 @@ def show_stats_per_dimension(
         compute_delay: float = 1.0,
         **kwargs
 ):
+
     iterations_results, time_results = compute_stats_per_workers_table(
         max_workers, dim, iterations_per_workers, compute_delay, **kwargs
     )
+    print(iterations_results)
+    keys = list(iterations_results.keys())
+
     iterations_results_mean = {
-        st.name: np.array([x[0] for x in iterations_results[st.name]])
-        for st in SearchType
+        st: np.array([x[0] for x in iterations_results[st]])
+        for st in keys
     }
     iterations_results_std = {
-        st.name: np.array([x[1] for x in iterations_results[st.name]])
-        for st in SearchType
+        st: np.array([x[1] for x in iterations_results[st]])
+        for st in keys
     }
 
     time_results_mean = {
-        st.name: np.array([x[0] for x in time_results[st.name]])
-        for st in SearchType
+        st: np.array([x[0] for x in time_results[st]])
+        for st in keys
     }
     time_results_std = {
-        st.name: np.array([x[1] for x in time_results[st.name]])
-        for st in SearchType
+        st: np.array([x[1] for x in time_results[st]])
+        for st in keys
     }
 
     iterations_y_list = []
@@ -90,24 +94,24 @@ def show_stats_per_dimension(
 
     fig = go.Figure()
 
-    for i, st in enumerate(SearchType):
+    for i, st in enumerate(keys):
         x = list(iterations_results["Workers"])
 
-        itr_std_upper = list(iterations_results_mean[st.name] + iterations_results_std[st.name])
-        itr_std_lower = list(iterations_results_mean[st.name] - iterations_results_std[st.name])
-        itr_mean = list(iterations_results_mean[st.name])
+        itr_std_upper = list(iterations_results_mean[st] + iterations_results_std[st])
+        itr_std_lower = list(iterations_results_mean[st] - iterations_results_std[st])
+        itr_mean = list(iterations_results_mean[st])
         itr_std = itr_std_lower + itr_std_upper[::-1]
 
-        time_std_upper = list(time_results_mean[st.name] + time_results_std[st.name])
-        time_std_lower = list(time_results_mean[st.name] - time_results_std[st.name])
-        time_mean = list(time_results_mean[st.name])
+        time_std_upper = list(time_results_mean[st] + time_results_std[st])
+        time_std_lower = list(time_results_mean[st] - time_results_std[st])
+        time_mean = list(time_results_mean[st])
         time_std = time_std_lower + time_std_upper[::-1]
 
         fig.add_trace(
             go.Scatter(x=x,
                        y=itr_mean,
                        mode='lines',
-                       name=f"{st.name} Search mean",
+                       name=f"{st} Search mean",
                        line_color=plotly_colors[i], )
         )
         fig.add_trace(
@@ -116,7 +120,7 @@ def show_stats_per_dimension(
                        mode='lines',
                        fill="toself",
                        fillcolor=plotly_colors[i],
-                       name=f"{st.name} Search std",
+                       name=f"{st} Search std",
                        line=dict(width=0.0),
                        opacity=0.5,)
         )
@@ -184,7 +188,7 @@ def show_stats_per_dimension(
     save_dir = kwargs.get("save_dir", f"figures/html_files/")
     os.makedirs(save_dir, exist_ok=True)
     if kwargs.get("save", True):
-        fig.write_html(f"{save_dir}/algorithms_comparison"
+        fig.write_html(f"{save_dir}/algorithms_workers_comparison"
                        f"-maxworkers{max_workers}-dim{dim}-iteration{iterations_per_workers}.html")
 
     fig.show()
@@ -197,7 +201,7 @@ if __name__ == '__main__':
 
     iterations_results, time_results = show_stats_per_dimension(
         # max_workers=multiprocessing.cpu_count()//2,
-        max_workers=4,
+        max_workers=3,
         dim=1,
         iterations_per_workers=2,
         compute_delay=0.0,
