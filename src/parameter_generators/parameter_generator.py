@@ -136,6 +136,12 @@ class ParameterGenerator:
         """
         return self.current_itr < self.max_itr and self.elapse_time < self.max_seconds
 
+    def __eq__(self, other):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return str(self.__dict__)
+
     @Decorators.increment_counters
     def get_trial_param(self) -> Dict[str, Union[int, float]]:
         """
@@ -471,3 +477,10 @@ class ParameterGenerator:
 
         with open(f'{save_dir}/{save_name}.json', 'w') as f:
             json.dump(self.get_best_param(), f, indent=4)
+
+    def save_obj(self):
+        raise NotImplementedError()
+
+    @staticmethod
+    def load_obj(path: str):
+        raise NotImplementedError()
