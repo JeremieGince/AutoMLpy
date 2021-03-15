@@ -7,6 +7,7 @@ from typing import Union, List, Tuple
 import pandas as pd
 from multiprocessing import Pool
 import torch
+from copy import deepcopy
 import logging
 from src.parameter_generators.parameter_generator import ParameterGenerator
 
@@ -54,6 +55,7 @@ class HpOptimizer:
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
             n_splits: int = 2,
+            nb_workers: Union[int, str] = "max",
             save_kwargs: dict = None,
             verbose: bool = True,
             **kwargs
@@ -67,6 +69,7 @@ class HpOptimizer:
         X: The training data.
         y: The training labels.
         n_splits: Number of split for the kfold.
+        nb_workers: number of used cpu. Default: "max".
         save_kwargs:
         verbose: True to print some stats else False.
 
@@ -78,57 +81,43 @@ class HpOptimizer:
             save_kwargs = {}
         warnings.simplefilter("ignore", UserWarning)
 
+        nb_workers = self._setup_nb_workers(nb_workers, verbose, **kwargs)
+
         stop_criterion = kwargs.get("stop_criterion", None)
+        stop_criterion_trigger = False
 
         param_gen.reset()
+        max_itr = len(param_gen)
+
         if verbose:
-            progress = tqdm.tqdm(range(len(param_gen)), unit='itr', postfix="optimisation")
+            progress = tqdm.tqdm(range(max_itr), unit='itr', postfix="optimisation")
         else:
-            progress = range(len(param_gen))
-        for _ in progress:
-            if not bool(param_gen):
+            progress = range(max_itr)
+        for i in progress:
+            if not bool(param_gen) or stop_criterion_trigger:
                 break
             try:
-                params = param_gen.get_trial_param()
-                # logging.debug(f"trial params: {params}")
+                if nb_workers > 1:
+                    workers_required = min(nb_workers, max_itr - i)
+                    outputs = self._execute_multiple_iteration_on_param_gen(workers_required, param_gen, X, y, n_splits)
+                else:
+                    outputs = [self._execute_iteration_on_param_gen(param_gen, X, y, n_splits)]
 
-                kf = KFold(n_splits=n_splits, shuffle=True)
+                for (params, mean_score) in outputs:
+                    param_gen.add_score_info(params, mean_score)
 
-                mean_score = 0
-                for j, (train_index, test_index) in enumerate(kf.split(X)):
-                    try:
-                        if isinstance(X, (np.ndarray, torch.Tensor)):
-                            sub_X_train, sub_X_test = X[train_index], X[test_index]
-                            sub_y_train, sub_y_test = y[train_index], y[test_index]
-                        elif isinstance(X, pd.DataFrame):
-                            sub_X_train, sub_X_test = X.iloc[train_index], X.iloc[test_index]
-                            sub_y_train, sub_y_test = y[train_index], y[test_index]
-                        else:
-                            raise ValueError(f"X must be Union[np.ndarray, pd.DataFrame, torch.Tensor]")
-
-                        model = self.build_model(**params)
-                        self.fit_model_(model, sub_X_train, sub_y_train, **params)
-
-                        score, _ = self.score(model, sub_X_test, sub_y_test, **params)
-                        mean_score = (j * mean_score + score) / (j + 1)
-                    except Exception as e:
-                        logging.error(str(e))
-                        raise e
-
-                if verbose:
-                    logging.debug(f"\ntrial_params: {params} --> mean score: {mean_score:.3f}")
-                    progress.set_postfix_str(f"mean_score: {mean_score:.2f}")
-                    progress.update()
-
-                param_gen.add_score_info(params, mean_score)
-
-                if stop_criterion is not None and stop_criterion <= mean_score:
                     if verbose:
-                        logging.info(f"Early stopping ->"
-                                     f" itr: {param_gen.current_itr},"
-                                     f" elapse_time: {param_gen.elapse_time:.3f} [s],"
-                                     f" mean score: {mean_score:.3f}")
-                    break
+                        logging.debug(f"\ntrial_params: {params} --> mean score: {mean_score:.3f}")
+                        progress.set_postfix_str(f"mean_score: {mean_score:.2f}")
+                        progress.update()
+
+                    if stop_criterion is not None and stop_criterion <= mean_score:
+                        if verbose:
+                            logging.info(f"Early stopping ->"
+                                         f" itr: {param_gen.current_itr},"
+                                         f" elapse_time: {param_gen.elapse_time:.3f} [s],"
+                                         f" mean score: {mean_score:.3f}")
+                        stop_criterion_trigger = True
             except Exception as ee:
                 logging.error(str(ee))
                 raise ee
@@ -138,6 +127,82 @@ class HpOptimizer:
         param_gen.save_best_param(**save_kwargs)
         param_gen.write_optimization_to_html(show=False, **save_kwargs)
         return param_gen
+
+    @staticmethod
+    def _setup_nb_workers(
+            nb_workers: Union[int, str] = "max",
+            verbose: bool = True,
+            **kwargs
+    ):
+        if isinstance(nb_workers, str):
+            if nb_workers.lower() == "max":
+                nb_workers = multiprocessing.cpu_count()
+        else:
+            nb_workers = min(multiprocessing.cpu_count(), nb_workers)
+
+        if verbose:
+            logging.info(f"Number of available cpu : {multiprocessing.cpu_count()} --> Using {nb_workers} cpu")
+        return nb_workers
+
+    def _execute_multiple_iteration_on_param_gen(
+            self,
+            nb_workers: int,
+            param_gen: ParameterGenerator,
+            X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
+            y: Union[np.ndarray, torch.Tensor],
+            n_splits: int = 2,
+    ):
+        params_list = [param_gen.get_trial_param() for _ in range(nb_workers)]
+        with Pool(nb_workers) as p:
+            scores = p.starmap(self._try_params, [
+                (params, X, y, n_splits)
+                for params in params_list
+            ])
+        outputs = [(params, score) for params, score in zip(params_list, scores)]
+        return outputs
+
+    def _execute_iteration_on_param_gen(
+            self,
+            param_gen: ParameterGenerator,
+            X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
+            y: Union[np.ndarray, torch.Tensor],
+            n_splits: int = 2,
+    ):
+        params = param_gen.get_trial_param()
+        mean_score = self._try_params(params, X, y, n_splits)
+        return params, mean_score
+
+    def _try_params(
+            self,
+            params,
+            X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
+            y: Union[np.ndarray, torch.Tensor],
+            n_splits: int = 2,
+    ) -> float:
+        kf = KFold(n_splits=n_splits, shuffle=True)
+
+        mean_score = 0.0
+        for j, (train_index, test_index) in enumerate(kf.split(X)):
+            try:
+                if isinstance(X, (np.ndarray, torch.Tensor)):
+                    sub_X_train, sub_X_test = X[train_index], X[test_index]
+                    sub_y_train, sub_y_test = y[train_index], y[test_index]
+                elif isinstance(X, pd.DataFrame):
+                    sub_X_train, sub_X_test = X.iloc[train_index], X.iloc[test_index]
+                    sub_y_train, sub_y_test = y[train_index], y[test_index]
+                else:
+                    raise ValueError(f"X must be Union[np.ndarray, pd.DataFrame, torch.Tensor]")
+
+                model = self.build_model(**params)
+                self.fit_model_(model, sub_X_train, sub_y_train, **params)
+
+                score, _ = self.score(model, sub_X_test, sub_y_test, **params)
+                mean_score = (j * mean_score + score) / (j + 1)
+            except Exception as e:
+                logging.error(str(e))
+                raise e
+
+        return mean_score
 
 
 def optimize_parameters(
@@ -346,11 +411,11 @@ if __name__ == '__main__':
         # use_batchnorm=[True, False],
         pre_normalized=[True, False],
     )
-    param_gen = RandomHpSearch(hp_space, max_seconds=60 * 60 * 0.5, max_itr=10)
+    _param_gen = RandomHpSearch(hp_space, max_seconds=60 * 60 * 0.5, max_itr=10)
 
     start_time = time.time()
-    param_gen = cifar10_hp_optimizer.optimize(
-        param_gen,
+    _param_gen = cifar10_hp_optimizer.optimize(
+        _param_gen,
         cifar10_X_y_dict["train"]["x"],
         cifar10_X_y_dict["train"]["y"],
         n_splits=2,
@@ -359,9 +424,9 @@ if __name__ == '__main__':
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    opt_hp = param_gen.get_best_param()
+    opt_hp = _param_gen.get_best_param()
 
-    logging.info(f"Predicted best hyper-parameters: \n{param_gen.get_best_params_repr()}")
+    logging.info(f"Predicted best hyper-parameters: \n{_param_gen.get_best_params_repr()}")
     model = cifar10_hp_optimizer.build_model(**opt_hp)
     cifar10_hp_optimizer.fit_model_(
         model,
@@ -378,6 +443,6 @@ if __name__ == '__main__':
         **opt_hp
     )
 
-    param_gen.write_optimization_to_html(show=True, save_name="cifar10", title="Cifar10")
+    _param_gen.write_optimization_to_html(show=True, save_name="cifar10", title="Cifar10")
 
     logging.info(f"test accuracy: {test_acc*100:.3f}%")
