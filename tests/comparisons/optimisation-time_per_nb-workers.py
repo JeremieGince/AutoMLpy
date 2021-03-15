@@ -17,21 +17,17 @@ def compute_stats_per_workers_table(
         compute_delay: float = 1.0,
         **kwargs
 ):
-    debug_types = [SearchType.Random]
-    # columns = ["Workers", *[st.name for st in SearchType]]
-    columns = ["Workers", *[st.name for st in debug_types]]
+    algo_types = kwargs.get("algos", SearchType)
+    columns = ["Workers", *[st.name for st in algo_types]]
     iterations_results = pd.DataFrame(columns=columns)
     time_results = pd.DataFrame(columns=columns)
 
     for w in range(1, max_workers+1):
         logging.info(f"\n{'-'*50} {w} Workers {'-'*50}")
-        # new_iterations_results = {"Workers": w, **{st.name: [] for st in SearchType}}
-        # new_time_results = {"Workers": w, **{st.name: [] for st in SearchType}}
-        new_iterations_results = {"Workers": w, **{st.name: [] for st in debug_types}}
-        new_time_results = {"Workers": w, **{st.name: [] for st in debug_types}}
+        new_iterations_results = {"Workers": w, **{st.name: [] for st in algo_types}}
+        new_time_results = {"Workers": w, **{st.name: [] for st in algo_types}}
 
-        # for _search_type in SearchType:
-        for _search_type in debug_types:
+        for _search_type in algo_types:
             logging.info(f"\n{'-'*10} {_search_type.name} search {'-'*10}")
             ell_itr = []
             ell_time = []
@@ -68,8 +64,7 @@ def show_stats_per_dimension(
     iterations_results, time_results = compute_stats_per_workers_table(
         max_workers, dim, iterations_per_workers, compute_delay, **kwargs
     )
-    print(iterations_results)
-    keys = list(iterations_results.keys())
+    keys = [st.name for st in kwargs.get("algos", SearchType)]
 
     iterations_results_mean = {
         st: np.array([x[0] for x in iterations_results[st]])
@@ -204,12 +199,13 @@ if __name__ == '__main__':
     log_device_setup()
 
     iterations_results, time_results = show_stats_per_dimension(
-        # max_workers=multiprocessing.cpu_count()//2,
-        max_workers=3,
+        max_workers=multiprocessing.cpu_count()//2,
+        # max_workers=3,
         dim=1,
-        iterations_per_workers=2,
-        compute_delay=0.0,
-        stop_criterion=0.75,
+        iterations_per_workers=10,
+        compute_delay=0.5,
+        stop_criterion=0.9,
+        algos=[SearchType.Random, SearchType.GPO],
         dark_mode=False
     )
 
