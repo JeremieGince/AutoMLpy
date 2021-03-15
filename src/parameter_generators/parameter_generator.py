@@ -27,6 +27,7 @@ import plotly.io as pio
 
 
 class ParameterGenerator:
+
     class Decorators:
         @classmethod
         def increment_counters(cls, method):
