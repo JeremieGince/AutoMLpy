@@ -4,11 +4,29 @@ import numpy as np
 import tqdm
 from sklearn.model_selection import KFold
 from typing import Union, List, Tuple
-import pandas as pd
 from multiprocessing import Pool
-import torch
 from copy import deepcopy
 import logging
+
+optional_modules = {}
+try:
+    import pandas as pd
+    optional_modules["pandas"] = True
+except ModuleNotFoundError:
+    optional_modules["pandas"] = False
+
+try:
+    import torch
+    optional_modules["torch"] = True
+except ModuleNotFoundError:
+    optional_modules["torch"] = False
+
+try:
+    import tensorflow as tf
+    optional_modules["tensorflow"] = True
+except ModuleNotFoundError:
+    optional_modules["tensorflow"] = False
+
 from src.parameter_generators.parameter_generator import ParameterGenerator
 
 
@@ -35,7 +53,15 @@ class HpOptimizer:
             y_val: Union[np.ndarray, torch.Tensor] = None,
             **hp
     ) -> object:
-        raise NotImplementedError("fit_model method must be implemented by the user")
+        raise NotImplementedError("fit_model_ method must be implemented by the user")
+
+    def fit_dataset_model_(
+            self,
+            model: object,
+            dataset,
+            **hp
+    ) -> object:
+        raise NotImplementedError("fit_dataset_model_ method must be implemented by the user")
 
     def score(
             self,
@@ -46,6 +72,14 @@ class HpOptimizer:
     ) -> Tuple[float, float]:
         raise NotImplementedError("score method must be implemented by the user")
 
+    def score_dataset(
+            self,
+            model: object,
+            dataset,
+            **hp
+    ) -> Tuple[float, float]:
+        raise NotImplementedError("score_dataset method must be implemented by the user")
+
     def __call__(self, *args, **kwargs):
         return self.optimize(*args, **kwargs)
 
@@ -55,11 +89,11 @@ class HpOptimizer:
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
             n_splits: int = 2,
-            nb_workers: Union[int, str] = "max",
+            nb_workers: Union[int, str] = 1,
             save_kwargs: dict = None,
             verbose: bool = True,
             **kwargs
-    ):
+    ) -> ParameterGenerator:
         """
         Optimize hyper-paremeters using the given ParameterGenerator and kfolding.
 
@@ -69,7 +103,7 @@ class HpOptimizer:
         X: The training data.
         y: The training labels.
         n_splits: Number of split for the kfold.
-        nb_workers: number of used cpu. Default: "max".
+        nb_workers: number of used cpu. Must be a int or the string "max". Default: 1.
         save_kwargs:
         verbose: True to print some stats else False.
 
@@ -97,28 +131,13 @@ class HpOptimizer:
             if not bool(param_gen) or stop_criterion_trigger:
                 break
             try:
-                if nb_workers > 1:
-                    workers_required = min(nb_workers, max_itr - i)
-                    outputs = self._execute_multiple_iteration_on_param_gen(workers_required, param_gen, X, y, n_splits)
-                else:
-                    outputs = [self._execute_iteration_on_param_gen(param_gen, X, y, n_splits)]
+                workers_required = min(nb_workers, max_itr - i)
+                outputs = self._process_trial_on_X_y(param_gen, X, y, n_splits, workers_required)
 
-                for (params, mean_score) in outputs:
-                    param_gen.add_score_info(params, mean_score)
+                stop_criterion_trigger = self._post_process_trial_(
+                    param_gen, outputs, stop_criterion, progress, verbose
+                )
 
-                    if verbose:
-                        logging.debug(f"param_gen: curr_itr: {param_gen.current_itr}")
-                        logging.debug(f"trial_params: {params} --> mean score: {mean_score:.3f}")
-                        progress.set_postfix_str(f"mean_score: {mean_score:.2f}")
-                        progress.update()
-
-                    if stop_criterion is not None and stop_criterion <= mean_score:
-                        if verbose:
-                            logging.info(f"Early stopping ->"
-                                         f" itr: {param_gen.current_itr},"
-                                         f" elapse_time: {param_gen.elapse_time:.3f} [s],"
-                                         f" mean score: {mean_score:.3f}")
-                        stop_criterion_trigger = True
             except Exception as ee:
                 logging.error(str(ee))
                 raise ee
@@ -129,12 +148,110 @@ class HpOptimizer:
         param_gen.write_optimization_to_html(show=False, **save_kwargs)
         return param_gen
 
+    def _process_trial_on_X_y(
+            self,
+            param_gen: ParameterGenerator,
+            X, y,
+            n_splits: int,
+            workers_required: int,
+    ) -> List[Tuple[dict, float]]:
+        """
+        Execute a trial on a set of parameters and a X, y for data.
+
+        Parameters
+        ----------
+        param_gen
+        X: The training data.
+        y: The training labels.
+        n_splits: Number of split for the kfold.
+        workers_required
+
+        Returns
+        -------
+
+        """
+        if workers_required > 1:
+            outputs = self._execute_multiple_param_gen_iteration_on_X_y(workers_required, param_gen, X, y, n_splits)
+        else:
+            outputs = [self._execute_param_gen_iteration_on_X_y(param_gen, X, y, n_splits)]
+        return outputs
+
+    def _post_process_trial_(
+            self,
+            param_gen,
+            trial_outputs,
+            stop_criterion,
+            progress,
+            verbose,
+    ) -> bool:
+        """
+        Post process the outputs of the trial execution of the training.
+        Update param_gen, logs, progress and stop criterion trigger state.
+
+        Parameters
+        ----------
+        param_gen
+        trial_outputs
+        stop_criterion
+        progress
+        verbose
+
+        Returns
+        -------
+        The stop_criterion_trigger.
+        """
+        stop_criterion_trigger = False
+
+        for (params, mean_score) in trial_outputs:
+            param_gen.add_score_info(params, mean_score)
+
+            if verbose:
+                logging.debug(f"param_gen: curr_itr: {param_gen.current_itr}")
+                logging.debug(f"trial_params: {params} --> mean score: {mean_score:.3f}")
+                progress.set_postfix_str(f"mean_score: {mean_score:.2f}")
+                progress.update()
+
+            if stop_criterion is not None and stop_criterion <= mean_score:
+                if verbose:
+                    logging.info(f"Early stopping ->"
+                                 f" itr: {param_gen.current_itr},"
+                                 f" elapse_time: {param_gen.elapse_time:.3f} [s],"
+                                 f" mean score: {mean_score:.3f}")
+                stop_criterion_trigger = True
+        return stop_criterion_trigger
+
+    def optimize_on_dataset(
+            self,
+            param_gen: ParameterGenerator,
+            dataset,
+            n_splits: int = 2,
+            nb_workers: Union[int, str] = "max",
+            save_kwargs: dict = None,
+            verbose: bool = True,
+            **kwargs
+    ) -> ParameterGenerator:
+        pass
+
     @staticmethod
     def _setup_nb_workers(
-            nb_workers: Union[int, str] = "max",
+            nb_workers: Union[int, str] = 1,
             verbose: bool = True,
             **kwargs
     ):
+        """
+        Check how many worker is available given the ideal number of workers.
+
+        Parameters
+        ----------
+        nb_workers: Ideal number of workers.
+        verbose: True to show logs else False.
+        kwargs:
+            None
+
+        Returns
+        -------
+        The number of available workers or the numbers of ideal workers.
+        """
         if isinstance(nb_workers, str):
             if nb_workers.lower() == "max":
                 nb_workers = multiprocessing.cpu_count()
@@ -145,39 +262,68 @@ class HpOptimizer:
             logging.info(f"Number of available cpu : {multiprocessing.cpu_count()} --> Using {nb_workers} cpu")
         return nb_workers
 
-    def _execute_multiple_iteration_on_param_gen(
+    def _execute_multiple_param_gen_iteration_on_X_y(
             self,
             nb_workers: int,
             param_gen: ParameterGenerator,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
             n_splits: int = 2,
-    ):
+    ) -> List[Tuple[dict, float]]:
+        """
+        Execute multiple trials on with the parameter generator on the data X, y.
+        The trials are made in multiprocessing with the number of workers.
+
+        Parameters
+        ----------
+        nb_workers: Number of multiprocessing process to start.
+        param_gen: The current parameter generator.
+        X: The training data.
+        y: The training labels.
+        n_splits: Number of split for the kfold.
+
+        Returns
+        -------
+        The list of outputs made by the multiple trials as list of tuples (parameters, score).
+        """
         params_list = [param_gen.get_trial_param() for _ in range(nb_workers)]
         with Pool(nb_workers) as p:
-            scores = p.starmap(self._try_params, [
+            scores = p.starmap(self._try_params_on_X_y, [
                 (params, X, y, n_splits)
                 for params in params_list
             ])
         outputs = [(params, score) for params, score in zip(params_list, scores)]
         return outputs
 
-    def _execute_iteration_on_param_gen(
+    def _execute_param_gen_iteration_on_X_y(
             self,
             param_gen: ParameterGenerator,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
             n_splits: int = 2,
-    ):
+    ) -> Tuple[dict, float]:
+        """
+        Execute a trial on with the parameter generator on the data X, y.
+
+        Parameters
+        ----------
+        param_gen: The current parameter generator.
+        X: The training data.
+        y: The training labels.
+        n_splits: Number of split for the kfold.
+
+        Returns
+        -------
+        The output of the trial as a tuple (parameters, score).
+        """
         params = param_gen.get_trial_param()
-        mean_score = self._try_params(params, X, y, n_splits)
+        mean_score = self._try_params_on_X_y(params, X, y, n_splits)
         return params, mean_score
 
-    def _try_params(
+    def _try_params_on_X_y(
             self,
             params,
-            X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
-            y: Union[np.ndarray, torch.Tensor],
+            X, y,
             n_splits: int = 2,
     ) -> float:
         kf = KFold(n_splits=n_splits, shuffle=True)
@@ -185,14 +331,7 @@ class HpOptimizer:
         mean_score = 0.0
         for j, (train_index, test_index) in enumerate(kf.split(X)):
             try:
-                if isinstance(X, (np.ndarray, torch.Tensor)):
-                    sub_X_train, sub_X_test = X[train_index], X[test_index]
-                    sub_y_train, sub_y_test = y[train_index], y[test_index]
-                elif isinstance(X, pd.DataFrame):
-                    sub_X_train, sub_X_test = X.iloc[train_index], X.iloc[test_index]
-                    sub_y_train, sub_y_test = y[train_index], y[test_index]
-                else:
-                    raise ValueError(f"X must be Union[np.ndarray, pd.DataFrame, torch.Tensor]")
+                (sub_X_train, sub_X_test), (sub_y_train, sub_y_test) = self._take_sub_X_y(X, y, train_index, test_index)
 
                 model = self.build_model(**params)
                 self.fit_model_(model, sub_X_train, sub_y_train, **params)
@@ -205,192 +344,38 @@ class HpOptimizer:
 
         return mean_score
 
+    def _take_sub_X_y(
+            self,
+            X, y,
+            train_index,
+            test_index,
+    ):
+        if isinstance(X, np.ndarray):
+            sub_X_train, sub_X_test = X[train_index], X[test_index]
+            sub_y_train, sub_y_test = y[train_index], y[test_index]
+        elif optional_modules["torch"] and isinstance(X, torch.Tensor):
+            sub_X_train, sub_X_test = X[train_index], X[test_index]
+            sub_y_train, sub_y_test = y[train_index], y[test_index]
+        elif optional_modules["tensorflow"] and isinstance(X, tf.Tensor):
+            sub_X_train, sub_X_test = X[train_index], X[test_index]
+            sub_y_train, sub_y_test = y[train_index], y[test_index]
+        elif optional_modules["pandas"] and isinstance(X, pd.DataFrame):
+            sub_X_train, sub_X_test = X.iloc[train_index], X.iloc[test_index]
+            sub_y_train, sub_y_test = y[train_index], y[test_index]
+        else:
+            raise ValueError(f"X must be Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor]")
+        return (sub_X_train, sub_X_test), (sub_y_train, sub_y_test)
 
-def optimize_parameters(
-        model_cls,
-        X: Union[np.ndarray, pd.DataFrame],
-        y: Union[np.ndarray],
-        param_gen: ParameterGenerator,
-        fit_func_name: str = "fit",
-        score_func_name: str = "score",
-        n_splits: int = 2,
-        model_cls_args: List = None,
-        fit_kwargs: dict = None,
-        forward_kwargs: dict = None,
-        save_kwargs: dict = None,
-        verbose: bool = True,
-) -> ParameterGenerator:
-    """
-    Optimize hyper-paremeters using the given ParameterGenerator and kfolding.
-
-    Parameters
-    ----------
-    model_cls: A class model. Must have the following implemented methods:
-                -> __init__(*model_cls_args, **x)
-    X: The training data.
-    y: The training labels.
-    param_gen: The parameter generator.
-    fit_func_name: The name of the method function to fit the model with the signature:
-                    -> fit(X: Union[np.ndarray pd.DataFrame],
-                           y: Union[np.ndarray, ],
-                           **fit_kwargs)
-    score_func_name: The name of the method used to get the score with signature:
-                     -> clf.score(X: Union[np.ndarray, pd.DataFrame],
-                                  y: Union[np.ndarray, ],
-                                  **forward_kwargs) -> Tuple[float, float] i.e: (mean, std)
-    n_splits: Number of split for the kfold.
-    model_cls_args: Arguments to give to the model_cls constructor.
-    fit_kwargs: kwargs to give to the fit method of model_cls.
-    forward_kwargs: kwargs to give to the score method of model_cls.
-    save_kwargs:
-    verbose: True to print some stats else False.
-
-    Return
-    ---------
-    The given ParameterGenerator optimized.
-    """
-    if save_kwargs is None:
-        save_kwargs = {}
-    if forward_kwargs is None:
-        forward_kwargs = {}
-    if fit_kwargs is None:
-        fit_kwargs = {}
-    if model_cls_args is None:
-        model_cls_args = []
-    warnings.simplefilter("ignore", UserWarning)
-
-    param_gen.reset()
-    if verbose:
-        progress = tqdm.tqdm(range(len(param_gen)), unit='itr', postfix="optimisation")
-    else:
-        progress = range(len(param_gen))
-    for _ in progress:
-        if not bool(param_gen):
-            break
-        try:
-            params = param_gen.get_trial_param()
-
-            kf = KFold(n_splits=n_splits, shuffle=True)
-
-            mean_score = 0
-            for j, (train_index, test_index) in enumerate(kf.split(X)):
-                try:
-                    if isinstance(X, (np.ndarray, )):
-                        sub_X_train, sub_X_test = X[train_index], X[test_index]
-                        sub_y_train, sub_y_test = y[train_index], y[test_index]
-                    elif isinstance(X, pd.DataFrame):
-                        sub_X_train, sub_X_test = X.iloc[train_index], X.iloc[test_index]
-                        sub_y_train, sub_y_test = y[train_index], y[test_index]
-                    else:
-                        raise ValueError(f"X must be Union[np.ndarray, pd.DataFrame]")
-
-                    clf = model_cls(*model_cls_args, **params)
-                    getattr(clf, fit_func_name)(clf, sub_X_train, sub_y_train, **fit_kwargs)
-
-                    score, _ = getattr(clf, score_func_name)(clf, sub_X_test, sub_y_test, **forward_kwargs)
-                    mean_score = (j * mean_score + score) / (j + 1)
-                except Exception as e:
-                    logging.error(str(e))
-
-            if verbose:
-                progress.set_postfix_str(f"mean_score: {mean_score:.2f}")
-                progress.update()
-
-            param_gen.add_score_info(params, mean_score)
-        except Exception as e:
-            logging.error(str(e))
-
-    if verbose:
-        progress.close()
-    param_gen.save_best_param(**save_kwargs)
-    param_gen.show_expectation(show=False, **save_kwargs)
-    return param_gen
-
-
-def multi_gpo_precessing(
-    model_cls,
-    X: Union[np.ndarray, pd.DataFrame],
-    y: Union[np.ndarray, ],
-    param_gens: List[ParameterGenerator],
-    fit_func_name: str = "fit",
-    score_func_name: str = "score",
-    n_splits: int = 2,
-    model_cls_args: List = None,
-    fit_kwargs: dict = None,
-    forward_kwargs: dict = None,
-    save_kwargs_list: List = None,
-    verbose: bool = True,
-    optimisation_func=optimize_parameters,
-    nb_cpu: Union[int, str] = "max",
-) -> List[ParameterGenerator]:
-    """
-    Optimize hyper-paremeters using the given ParamGens and kfolding in multiprocessing.
-
-    Parameters
-    ----------
-    model_cls: A class model. Must have the following implemented methods:
-                -> __init__(*model_cls_args, **x)
-    X: The training data.
-    y: The training label.
-    param_gens: List of the parameter generator.
-    fit_func_name: The name of the method function to fit the model with the signature:
-                    -> fit(X: Union[np.ndarray, pd.DataFrame],
-                           y: Union[np.ndarray, ],
-                           **fit_kwargs)
-    score_func_name: The name of the method used to get the score with signature:
-                     -> clf.score(X: Union[np.ndarray, pd.DataFrame],
-                                  y: Union[np.ndarray, ],
-                                  **forward_kwargs)
-    n_splits: Number of split for the kfold.
-    model_cls_args: Arguments to give to the model_cls constructor.
-    fit_kwargs: kwargs to give to the fit method of model_cls.
-    forward_kwargs: kwargs to give to the score method of model_cls.
-    save_kwargs_list:
-    verbose: True to print some stats else False.
-    optimisation_func: The optimisation function with signatue:
-                        -> optimisation_func(model_cls, X, y, gen, fit_func_name, score_func_name, n_splits,
-                                             model_cls_args, fit_kwargs, forward_kwargs, verbose)
-    nb_cpu: number of used cpu. Default: "max".
-    Return
-    ---------
-    The given ParamGens optimized.
-    """
-    if save_kwargs_list is None:
-        save_kwargs_list = [{} for _ in param_gens]
-    if forward_kwargs is None:
-        forward_kwargs = {}
-    if fit_kwargs is None:
-        fit_kwargs = {}
-    if model_cls_args is None:
-        model_cls_args = []
-
-    if len(save_kwargs_list) == 1:
-        save_kwargs_list = [save_kwargs_list[0] for _ in param_gens]
-
-    assert len(save_kwargs_list) == len(param_gens)
-
-    if isinstance(nb_cpu, str):
-        if nb_cpu.lower() == "max":
-            nb_cpu = multiprocessing.cpu_count()
-    else:
-        nb_cpu = min(multiprocessing.cpu_count(), nb_cpu)
-
-    if verbose:
-        logging.info(f"Number of available cpu : {multiprocessing.cpu_count()}, \n"
-                     f"Using {nb_cpu} cpu")
-
-    with Pool(nb_cpu) as p:
-        outputs = p.starmap(optimisation_func, [
-            (model_cls, X, y, gen, fit_func_name, score_func_name, n_splits,
-             model_cls_args, fit_kwargs, forward_kwargs, save_kwargs_list[i], verbose)
-            for i, gen in enumerate(param_gens)
-        ])
-    return [param_gen for param_gen in outputs]
+    def _take_sub_dataset(
+            self,
+            dataset,
+    ):
+        raise NotImplementedError()
 
 
 if __name__ == '__main__':
     from src.parameter_generators.random_search import RandomHpSearch
-    from tests.pytorch_items.pytorch_datasets import get_Cifar10_X_y
+    from tests.pytorch_items.pytorch_datasets import get_torch_Cifar10_X_y
     import time
     from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer
     import numpy as np
@@ -400,7 +385,7 @@ if __name__ == '__main__':
     logs_file_setup(__file__)
     log_device_setup(DeepLib.Pytorch)
 
-    cifar10_X_y_dict = get_Cifar10_X_y()
+    cifar10_X_y_dict = get_torch_Cifar10_X_y()
     cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
 
     hp_space = dict(
@@ -428,9 +413,9 @@ if __name__ == '__main__':
     opt_hp = _param_gen.get_best_param()
 
     logging.info(f"Predicted best hyper-parameters: \n{_param_gen.get_best_params_repr()}")
-    model = cifar10_hp_optimizer.build_model(**opt_hp)
+    model_ = cifar10_hp_optimizer.build_model(**opt_hp)
     cifar10_hp_optimizer.fit_model_(
-        model,
+        model_,
         cifar10_X_y_dict["train"]["x"],
         cifar10_X_y_dict["train"]["y"],
         verbose=True,
@@ -438,7 +423,7 @@ if __name__ == '__main__':
     )
 
     test_acc, _ = cifar10_hp_optimizer.score(
-        model,
+        model_,
         cifar10_X_y_dict["test"]["x"],
         cifar10_X_y_dict["test"]["y"],
         **opt_hp
