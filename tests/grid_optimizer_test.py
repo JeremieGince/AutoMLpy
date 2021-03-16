@@ -2,7 +2,7 @@ import unittest
 from src.parameter_generators.grid_search import GridHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
-from tests.pytorch_items.pytorch_datasets import get_MNIST_X_y, get_Cifar10_X_y
+from tests.pytorch_items.pytorch_datasets import get_torch_MNIST_X_y, get_torch_Cifar10_X_y
 import time
 from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
 import numpy as np
@@ -80,7 +80,7 @@ class TestGridHpOptimizerObjFunc(unittest.TestCase):
 class TestGridHpOptimizerVisionProblem(unittest.TestCase):
     def test_optimize_Cifar10(self):
         # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
-        cifar10_X_y_dict = get_Cifar10_X_y()
+        cifar10_X_y_dict = get_torch_Cifar10_X_y()
 
         cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
 
@@ -146,7 +146,7 @@ class TestGridHpOptimizerVisionProblem(unittest.TestCase):
     def test_optimize_MNIST(self):
         # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
 
-        mnist_X_y_dict = get_MNIST_X_y()
+        mnist_X_y_dict = get_torch_MNIST_X_y()
 
         mnist_hp_optimizer = PoutyneMNISTHpOptimizer()
 
