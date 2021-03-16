@@ -1,5 +1,6 @@
 from typing import Tuple, Callable
-
+import os
+import time
 import numpy as np
 
 from src.optimizers.optimizer import HpOptimizer
@@ -29,6 +30,8 @@ def vectorized_objective_function(x, **kwargs):
 
     cos_prod = np.prod(np.cos(omega_x), axis=0)
     exp_prod = np.exp(-np.sum(omega_xx, axis=0))
+
+    time.sleep(kwargs.get("compute_delay", 0.0))
     return cos_prod*exp_prod + noise
 
 
@@ -41,6 +44,10 @@ class VectorizedObjectiveFuncHpOptimizer(HpOptimizer):
     max: float = 1.0
     min: float = 0.0
     score_space = None
+    compute_delay: float = 0.0  # [secs]
+
+    def set_compute_delay(self, new_compute_delay: float):
+        self.compute_delay = new_compute_delay
 
     def set_dim(self, new_dim: int):
         self.dim = new_dim
@@ -54,6 +61,7 @@ class VectorizedObjectiveFuncHpOptimizer(HpOptimizer):
                 # omega=np.random.normal(10.0, 1.0, self.dim),
                 omega=np.array([1*10**(i/self.dim+1) for i in range(self.dim)]),
                 noise=0.0,
+                compute_delay=self.compute_delay,
             )
             self.meshgrid = np.meshgrid(*[self.hp_space[f"x{i}"] for i in range(self.dim)])
             self.score_space = vectorized_objective_function(np.array(self.meshgrid), **self.params)
@@ -83,8 +91,6 @@ class VectorizedObjectiveFuncHpOptimizer(HpOptimizer):
 if __name__ == '__main__':
     import plotly.graph_objects as go
     from src.parameter_generators.gp_search import GPOHpSearch
-    import os
-    import time
 
     # ----------------- Initialization -------------------- #
     obj_func_hp_optimizer = VectorizedObjectiveFuncHpOptimizer()
