@@ -148,7 +148,7 @@ class PoutyneCifar10HpOptimizer(HpOptimizer):
 
 
 if __name__ == '__main__':
-    from tests.pytorch_items.pytorch_datasets import get_Cifar10_X_y
+    from tests.pytorch_items.pytorch_datasets import get_torch_Cifar10_X_y
 
     hp = dict(
         epochs=15,
@@ -159,7 +159,7 @@ if __name__ == '__main__':
         use_batchnorm=True,
         pre_normalized=True,
     )
-    X_y_dict = get_Cifar10_X_y()
+    X_y_dict = get_torch_Cifar10_X_y()
     opt = PoutyneCifar10HpOptimizer()
     model = opt.build_model(**hp)
     opt.fit_model_(
