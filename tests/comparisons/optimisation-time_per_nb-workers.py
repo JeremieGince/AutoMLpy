@@ -190,7 +190,7 @@ def show_stats_per_dimension(
     save_dir = kwargs.get("save_dir", f"figures/html_files/")
     os.makedirs(save_dir, exist_ok=True)
     if kwargs.get("save", True):
-        fig.write_html(f"{save_dir}/algorithms_workers_comparison"
+        fig.write_html(f"{save_dir}/algorithms_workers_comparison-algos[{'_'.join(keys)}]"
                        f"-maxworkers{max_workers}-dim{dim}-iteration{iterations_per_workers}.html")
 
     fig.show()
