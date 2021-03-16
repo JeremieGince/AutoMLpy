@@ -111,3 +111,4 @@ tests/parameter_generators_data/RandomHpSearch/temp
 **temp
 **logs
 tests/comparisons/parameter_generators_data
+tests/parameter_generators_data
