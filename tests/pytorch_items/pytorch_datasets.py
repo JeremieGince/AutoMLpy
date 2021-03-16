@@ -13,7 +13,7 @@ import logging
 BASE_PATH = '~/tests/pytorch_datasets/'
 
 
-def get_MNIST_datasets(seed: int = 42, path=os.path.join(BASE_PATH, 'mnist'), **kwargs):
+def get_torch_MNIST_datasets(seed: int = 42, path=os.path.join(BASE_PATH, 'mnist'), **kwargs):
     train_split_ratio = 0.8
 
     np.random.seed(seed)
@@ -46,9 +46,9 @@ def get_MNIST_datasets(seed: int = 42, path=os.path.join(BASE_PATH, 'mnist'), **
     return dict(train=train_dataset, valid=valid_dataset, test=test_dataset)
 
 
-def get_MNIST_dataloaders(seed: int = 42, path=os.path.join(BASE_PATH, 'mnist'), **kwargs):
+def get_torch_MNIST_dataloaders(seed: int = 42, path=os.path.join(BASE_PATH, 'mnist'), **kwargs):
     batch_size = 64
-    mnist_datasets = get_MNIST_datasets(seed, path)
+    mnist_datasets = get_torch_MNIST_datasets(seed, path)
 
     train_loader = DataLoader(mnist_datasets["train"], batch_size=batch_size, num_workers=2, shuffle=True)
     valid_loader = DataLoader(mnist_datasets["valid"], batch_size=batch_size, num_workers=2)
@@ -57,9 +57,9 @@ def get_MNIST_dataloaders(seed: int = 42, path=os.path.join(BASE_PATH, 'mnist'),
     return dict(train=train_loader, valid=valid_loader, test=test_loader)
 
 
-def get_MNIST_X_y(**kwargs):
+def get_torch_MNIST_X_y(**kwargs):
     # TODO: optimize
-    datasets = get_MNIST_datasets(**kwargs)
+    datasets = get_torch_MNIST_datasets(**kwargs)
     X_y_dict = {phase: dict(x=[], y=[]) for phase in datasets}
     for phase, dataset in datasets.items():
         for x, y in dataset:
@@ -72,7 +72,7 @@ def get_MNIST_X_y(**kwargs):
     return X_y_dict
 
 
-def get_Cifar10_datasets(seed: int = 42, path=os.path.join(BASE_PATH, 'cifar10'), **kwargs):
+def get_torch_Cifar10_datasets(seed: int = 42, path=os.path.join(BASE_PATH, 'cifar10'), **kwargs):
     train_split_ratio = 0.8
 
     np.random.seed(seed)
@@ -105,9 +105,9 @@ def get_Cifar10_datasets(seed: int = 42, path=os.path.join(BASE_PATH, 'cifar10')
     return dict(train=train_dataset, valid=valid_dataset, test=test_dataset)
 
 
-def get_Cifar10_dataloaders(seed: int = 42, path=os.path.join(BASE_PATH, 'cifar10'), **kwargs):
+def get_torch_Cifar10_dataloaders(seed: int = 42, path=os.path.join(BASE_PATH, 'cifar10'), **kwargs):
     batch_size = 64
-    cifar10_datasets = get_Cifar10_datasets(seed, path)
+    cifar10_datasets = get_torch_Cifar10_datasets(seed, path)
 
     train_loader = DataLoader(cifar10_datasets["train"], batch_size=batch_size, num_workers=2, shuffle=True)
     valid_loader = DataLoader(cifar10_datasets["valid"], batch_size=batch_size, num_workers=2)
@@ -116,9 +116,9 @@ def get_Cifar10_dataloaders(seed: int = 42, path=os.path.join(BASE_PATH, 'cifar1
     return dict(train=train_loader, valid=valid_loader, test=test_loader)
 
 
-def get_Cifar10_X_y(**kwargs):
+def get_torch_Cifar10_X_y(**kwargs):
     # TODO: optimize
-    datasets = get_Cifar10_datasets(**kwargs)
+    datasets = get_torch_Cifar10_datasets(**kwargs)
     X_y_dict = {phase: dict(x=[], y=[]) for phase in datasets}
     for phase, dataset in datasets.items():
         for x, y in dataset:
@@ -172,7 +172,7 @@ class SpiralDataset(Dataset):
 
 
 if __name__ == '__main__':
-    get_MNIST_datasets()
-    x_y_dict = get_MNIST_X_y()
+    get_torch_MNIST_datasets()
+    x_y_dict = get_torch_MNIST_X_y()
     print(x_y_dict["train"]["x"].shape, x_y_dict["train"]["y"].shape)
     print(x_y_dict["test"]["x"].shape, x_y_dict["test"]["y"].shape)
