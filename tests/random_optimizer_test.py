@@ -2,7 +2,7 @@ import unittest
 from src.parameter_generators.random_search import RandomHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
-from tests.pytorch_items.pytorch_datasets import get_MNIST_X_y, get_Cifar10_X_y
+from tests.pytorch_items.pytorch_datasets import get_torch_MNIST_X_y, get_torch_Cifar10_X_y
 import time
 from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
 import numpy as np
@@ -77,10 +77,10 @@ class TestRandomHpOptimizerObjFunc(unittest.TestCase):
         self.assertTrue(param_gen.current_itr <= param_gen.max_itr)
 
 
-class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
+class TestRandomHpOptimizerVisionProblemPytorch(unittest.TestCase):
     def test_optimize_Cifar10(self):
         # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
-        cifar10_X_y_dict = get_Cifar10_X_y()
+        cifar10_X_y_dict = get_torch_Cifar10_X_y()
 
         cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
 
@@ -146,7 +146,7 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
     def test_optimize_MNIST(self):
         # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
 
-        mnist_X_y_dict = get_MNIST_X_y()
+        mnist_X_y_dict = get_torch_MNIST_X_y()
 
         mnist_hp_optimizer = PoutyneMNISTHpOptimizer()
 
@@ -198,6 +198,73 @@ class TestRandomHpOptimizerVisionProblem(unittest.TestCase):
         self.assertTrue(
             test_acc >= 0.985,
             f"MNIST --> Random Gen result: {test_acc*100:.3f}%"
+        )
+        self.assertTrue(
+            elapsed_time <= 1.15 * param_gen.max_seconds,
+            f"Had a budget of {param_gen.max_seconds}s and take {elapsed_time}s"
+        )
+        self.assertTrue(
+            param_gen.current_itr <= param_gen.max_itr,
+            f"Had a budget of {param_gen.max_itr}itr and take {param_gen.current_itr}itr"
+        )
+
+
+class TestRandomHpOptimizerVisionProblemTensorflow(unittest.TestCase):
+    def test_optimize_Cifar10(self):
+        # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
+        cifar10_X_y_dict = get_torch_Cifar10_X_y()
+
+        cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
+
+        hp_space = dict(
+            epochs=list(range(1, 26)),
+            batch_size=[32, 64],
+            learning_rate=np.linspace(1e-4, 1e-1, 50),
+            nesterov=[True, False],
+            momentum=np.linspace(0.01, 0.99, 50),
+            use_batchnorm=[True, False],
+            pre_normalized=[True, False],
+        )
+        param_gen = RandomHpSearch(hp_space, max_seconds=60 * 60 * 1, max_itr=1_000)
+
+        save_kwargs = dict(
+            save_name=f"cifar10_hp_opt",
+            title="Random search: Cifar10",
+        )
+
+        start_time = time.time()
+        param_gen = cifar10_hp_optimizer.optimize(
+            param_gen,
+            cifar10_X_y_dict["train"]["x"],
+            cifar10_X_y_dict["train"]["y"],
+            n_splits=2,
+            save_kwargs=save_kwargs,
+        )
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        opt_hp = param_gen.get_best_param()
+
+        model = cifar10_hp_optimizer.build_model(**opt_hp)
+        cifar10_hp_optimizer.fit_model_(
+            model,
+            cifar10_X_y_dict["train"]["x"],
+            cifar10_X_y_dict["train"]["y"],
+            **opt_hp
+        )
+
+        test_acc, _ = cifar10_hp_optimizer.score(
+            model,
+            cifar10_X_y_dict["test"]["x"],
+            cifar10_X_y_dict["test"]["y"],
+            **opt_hp
+        )
+
+        param_gen.write_optimization_to_html(show=True, **save_kwargs)
+
+        self.assertTrue(
+            test_acc >= 0.7,
+            f"Cifar10 --> Random Gen result: {test_acc*100:.3f}%"
         )
         self.assertTrue(
             elapsed_time <= 1.15 * param_gen.max_seconds,
