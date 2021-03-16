@@ -22,6 +22,9 @@ def compute_stats_per_workers_table(
     iterations_results = pd.DataFrame(columns=columns)
     time_results = pd.DataFrame(columns=columns)
 
+    # TODO: get memory usage https://stackoverflow.com/questions/938733/total-memory-used-by-python-process
+    memory_results = pd.DataFrame(columns=columns)
+
     for w in range(1, max_workers+1):
         logging.info(f"\n{'-'*50} {w} Workers {'-'*50}")
         new_iterations_results = {"Workers": w, **{st.name: [] for st in algo_types}}
@@ -199,11 +202,11 @@ if __name__ == '__main__':
     log_device_setup()
 
     iterations_results, time_results = show_stats_per_dimension(
-        max_workers=multiprocessing.cpu_count()//2,
+        max_workers=min(10, multiprocessing.cpu_count()//2),
         # max_workers=3,
         dim=1,
         iterations_per_workers=10,
-        compute_delay=0.5,
+        compute_delay=0.05,
         stop_criterion=0.9,
         algos=[SearchType.Random, SearchType.GPO],
         dark_mode=False
