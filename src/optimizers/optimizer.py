@@ -72,7 +72,7 @@ class HpOptimizer:
     ) -> Tuple[float, float]:
         raise NotImplementedError("score method must be implemented by the user")
 
-    def score_dataset(
+    def score_on_dataset(
             self,
             model: object,
             dataset,
@@ -366,11 +366,53 @@ class HpOptimizer:
             raise ValueError(f"X must be Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor]")
         return (sub_X_train, sub_X_test), (sub_y_train, sub_y_test)
 
+    def _try_params_on_dataset(
+            self,
+            params,
+            dataset,
+    ) -> float:
+        n_splits = 2
+        train_size = int(len(dataset)//n_splits)
+        test_size = len(dataset) - train_size
+
+        mean_score = 0.0
+        for k in range(n_splits):
+            try:
+                sub_dataset_train, sub_dataset_test = self._take_sub_dataset(dataset, train_size, test_size, k)
+
+                model = self.build_model(**params)
+                self.fit_dataset_model_(model, sub_dataset_train, **params)
+
+                score, _ = self.score_on_dataset(model, sub_dataset_test, **params)
+                mean_score = (k * mean_score + score) / (k + 1)
+            except Exception as e:
+                logging.error(str(e))
+                raise e
+
+        return mean_score
+
     def _take_sub_dataset(
             self,
             dataset,
+            train_size: int,
+            test_size: int,
+            k: int
     ):
-        raise NotImplementedError()
+        if optional_modules["torch"] and isinstance(dataset, torch.Tensor):
+            raise NotImplementedError("torch dataset is not implemented yet")
+        elif optional_modules["tensorflow"] and isinstance(dataset, tf.data.Dataset):
+            dataset = dataset.shuffle(len(dataset))
+            if k == 0:
+                sub_dataset_train = dataset.take(train_size)
+                sub_dataset_test = dataset.skip(train_size)
+            elif k == 1:
+                sub_dataset_test = dataset.take(test_size)
+                sub_dataset_train = dataset.skip(test_size)
+            else:
+                raise ValueError(f"k must be equal to 0 or 1")
+        else:
+            raise ValueError(f"dataset must be Union[torch.Tensor, tf.Tensor]")
+        return sub_dataset_train, sub_dataset_test
 
 
 if __name__ == '__main__':
