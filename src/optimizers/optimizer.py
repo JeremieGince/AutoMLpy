@@ -47,10 +47,8 @@ class HpOptimizer:
     def fit_model_(
             self,
             model: object,
-            X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
-            y: Union[np.ndarray, torch.Tensor],
-            X_val: Union[np.ndarray, pd.DataFrame, torch.Tensor] = None,
-            y_val: Union[np.ndarray, torch.Tensor] = None,
+            X, y,
+            X_val=None, y_val=None,
             **hp
     ) -> object:
         raise NotImplementedError("fit_model_ method must be implemented by the user")
@@ -66,8 +64,7 @@ class HpOptimizer:
     def score(
             self,
             model: object,
-            X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
-            y: Union[np.ndarray, torch.Tensor],
+            X, y,
             **hp
     ) -> Tuple[float, float]:
         raise NotImplementedError("score method must be implemented by the user")
@@ -86,8 +83,7 @@ class HpOptimizer:
     def optimize(
             self,
             param_gen: ParameterGenerator,
-            X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
-            y: Union[np.ndarray, torch.Tensor],
+            X, y,
             n_splits: int = 2,
             nb_workers: Union[int, str] = 1,
             save_kwargs: dict = None,
@@ -95,16 +91,16 @@ class HpOptimizer:
             **kwargs
     ) -> ParameterGenerator:
         """
-        Optimize hyper-paremeters using the given ParameterGenerator and kfolding.
+        Optimize hyper-parameters using the given ParameterGenerator with kfolding.
 
         Parameters
         ----------
         param_gen: The parameter generator.
-        X: The training data.
-        y: The training labels.
+        X: The training data. (Union[np.ndarray, torch.Tensor, pd.Dataframe, tf.Tensor])
+        y: The training labels. (Union[np.ndarray, torch.Tensor])
         n_splits: Number of split for the kfold.
         nb_workers: number of used cpu. Must be a int or the string "max". Default: 1.
-        save_kwargs:
+        save_kwargs: Saving kwargs of the parameter generator.
         verbose: True to print some stats else False.
 
         Return
@@ -164,7 +160,7 @@ class HpOptimizer:
         X: The training data.
         y: The training labels.
         n_splits: Number of split for the kfold.
-        workers_required
+        workers_required: Number of used cpu. Must be a int or the string "max". Default: 1.
 
         Returns
         -------
@@ -194,7 +190,7 @@ class HpOptimizer:
         trial_outputs
         stop_criterion
         progress
-        verbose
+        verbose:
 
         Returns
         -------
@@ -224,13 +220,87 @@ class HpOptimizer:
             self,
             param_gen: ParameterGenerator,
             dataset,
-            n_splits: int = 2,
-            nb_workers: Union[int, str] = "max",
+            nb_workers: Union[int, str] = 1,
             save_kwargs: dict = None,
             verbose: bool = True,
             **kwargs
     ) -> ParameterGenerator:
-        pass
+        """
+        Optimize hyper-paremeters using the given ParameterGenerator and kfolding.
+
+        Parameters
+        ----------
+        param_gen: The parameter generator.
+        dataset: The dataset used to train the model.
+        nb_workers: Number of used cpu. Must be a int or the string "max". Default: 1.
+        save_kwargs: Saving kwargs of the parameter generator.
+        verbose: True to print some stats else False.
+
+        Return
+        ---------
+        The given ParameterGenerator optimized.
+        """
+        if save_kwargs is None:
+            save_kwargs = {}
+        warnings.simplefilter("ignore", UserWarning)
+
+        nb_workers = self._setup_nb_workers(nb_workers, verbose, **kwargs)
+
+        stop_criterion = kwargs.get("stop_criterion", None)
+        stop_criterion_trigger = False
+
+        param_gen.reset()
+        max_itr = len(param_gen)
+
+        if verbose:
+            progress = tqdm.tqdm(range(max_itr), unit='itr', postfix="optimisation")
+        else:
+            progress = range(max_itr)
+        for i in progress:
+            if not bool(param_gen) or stop_criterion_trigger:
+                break
+            try:
+                workers_required = min(nb_workers, max_itr - i)
+                outputs = self._process_trial_on_dataset(param_gen, dataset, workers_required)
+
+                stop_criterion_trigger = self._post_process_trial_(
+                    param_gen, outputs, stop_criterion, progress, verbose
+                )
+
+            except Exception as ee:
+                logging.error(str(ee))
+                raise ee
+
+        if verbose:
+            progress.close()
+        param_gen.save_best_param(**save_kwargs)
+        param_gen.write_optimization_to_html(show=False, **save_kwargs)
+        return param_gen
+
+    def _process_trial_on_dataset(
+            self,
+            param_gen: ParameterGenerator,
+            dataset,
+            workers_required: int,
+    ) -> List[Tuple[dict, float]]:
+        """
+        Execute a trial on a set of parameters and a dataset for data.
+
+        Parameters
+        ----------
+        param_gen: The parameter generator.
+        dataset: The dataset used to train the model.
+        workers_required: Number of used cpu. Must be a int or the string "max". Default: 1.
+
+        Returns
+        -------
+
+        """
+        if workers_required > 1:
+            outputs = self._execute_multiple_param_gen_iteration_on_dataset(workers_required, param_gen, dataset)
+        else:
+            outputs = [self._execute_param_gen_iteration_on_dataset(param_gen, dataset)]
+        return outputs
 
     @staticmethod
     def _setup_nb_workers(
@@ -266,8 +336,7 @@ class HpOptimizer:
             self,
             nb_workers: int,
             param_gen: ParameterGenerator,
-            X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
-            y: Union[np.ndarray, torch.Tensor],
+            X, y,
             n_splits: int = 2,
     ) -> List[Tuple[dict, float]]:
         """
@@ -298,8 +367,7 @@ class HpOptimizer:
     def _execute_param_gen_iteration_on_X_y(
             self,
             param_gen: ParameterGenerator,
-            X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
-            y: Union[np.ndarray, torch.Tensor],
+            X, y,
             n_splits: int = 2,
     ) -> Tuple[dict, float]:
         """
@@ -366,6 +434,56 @@ class HpOptimizer:
             raise ValueError(f"X must be Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor]")
         return (sub_X_train, sub_X_test), (sub_y_train, sub_y_test)
 
+    def _execute_multiple_param_gen_iteration_on_dataset(
+            self,
+            nb_workers: int,
+            param_gen: ParameterGenerator,
+            dataset,
+    ) -> List[Tuple[dict, float]]:
+        """
+        Execute multiple trials on with the parameter generator on the data X, y.
+        The trials are made in multiprocessing with the number of workers.
+
+        Parameters
+        ----------
+        nb_workers: Number of multiprocessing process to start.
+        param_gen: The current parameter generator.
+        dataset: The dataset used to train the model.
+
+        Returns
+        -------
+        The list of outputs made by the multiple trials as list of tuples (parameters, score).
+        """
+        params_list = [param_gen.get_trial_param() for _ in range(nb_workers)]
+        with Pool(nb_workers) as p:
+            scores = p.starmap(self._try_params_on_dataset, [
+                (params, dataset)
+                for params in params_list
+            ])
+        outputs = [(params, score) for params, score in zip(params_list, scores)]
+        return outputs
+
+    def _execute_param_gen_iteration_on_dataset(
+            self,
+            param_gen: ParameterGenerator,
+            dataset,
+    ) -> Tuple[dict, float]:
+        """
+        Execute a trial on with the parameter generator on the dataset.
+
+        Parameters
+        ----------
+        param_gen: The current parameter generator.
+        dataset: The dataset used to train the model.
+
+        Returns
+        -------
+        The output of the trial as a tuple (parameters, score).
+        """
+        params = param_gen.get_trial_param()
+        mean_score = self._try_params_on_dataset(params, dataset)
+        return params, mean_score
+
     def _try_params_on_dataset(
             self,
             params,
@@ -411,7 +529,7 @@ class HpOptimizer:
             else:
                 raise ValueError(f"k must be equal to 0 or 1")
         else:
-            raise ValueError(f"dataset must be Union[torch.Tensor, tf.Tensor]")
+            raise ValueError(f"dataset is {type(dataset)} but must be Union[tf.data.Dataset, ]")
         return sub_dataset_train, sub_dataset_test
 
 
