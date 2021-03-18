@@ -7,8 +7,14 @@ In this package you can find: a grid search method, a random search algorithm an
 Everything is implemented to be compatible with the _Tensorflow_, _pyTorch_ and _sklearn_ libraries. 
 
 
+# Installation
+
+pip install something...
+
+And that's it!
+
  
- 
+ ---------------------------------------------------------------------------
 # Example - MNIST optimization with Tensorflow & Keras
 
 Here you can see an example on how to optimize a model made with Tensorflow and Keras on the popular dataset MNIST.
@@ -237,7 +243,7 @@ You can visualize the optimization with a interactive html file.
 fig = param_gen.write_optimization_to_html(show=True, **save_kwargs)
 ```
  
- ## Other examples
+ # Other examples
  Examples on how to use this package are in the folder "./examples". There you can find the previous example 
  with _Tensorflow_ and an example with _pyTorch_.
 
