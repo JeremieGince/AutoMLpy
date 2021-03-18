@@ -37,11 +37,39 @@ class ParamGenType:
 
 
 class HpOptimizer:
+    """
+    Class used to optimize a set of hyper-parameters with a parameter generator. This is a virtual class
+    and the user must implement the following method before the optimization:
+
+        To work with data in form X and y:
+            build_model: method used to build the model to optimize given a set of hyper-parameters,
+            fit_model_: method used to fit the model to optimize given a set of hyper-parameters,
+            score: method used to get the score of the trained model given a set of hyper-parameters,
+
+        To work with datasets:
+            build_model: method used to build the model to optimize given a set of hyper-parameters,
+            fit_dataset_model_: method used to fit the model to optimize given a set of hyper-parameters,
+            score_on_dataset: method used to get the score of the trained model given a set of hyper-parameters,
+
+    Examples on how to use this class are in the folder "./examples".
+
+    """
     def __init__(self):
         self.hp = {}
         self.model = None
 
     def build_model(self, **hp) -> object:
+        """
+        Method used to build the model to optimize given a set of hyper-parameters.
+
+        Parameters
+        ----------
+        hp: The hyper-parameters that come from the parameter generator.
+
+        Returns
+        -------
+        The model to optimized.
+        """
         raise NotImplementedError("build_model method must be implemented by the user")
 
     def fit_model_(
@@ -53,14 +81,6 @@ class HpOptimizer:
     ) -> object:
         raise NotImplementedError("fit_model_ method must be implemented by the user")
 
-    def fit_dataset_model_(
-            self,
-            model: object,
-            dataset,
-            **hp
-    ) -> object:
-        raise NotImplementedError("fit_dataset_model_ method must be implemented by the user")
-
     def score(
             self,
             model: object,
@@ -68,6 +88,14 @@ class HpOptimizer:
             **hp
     ) -> Tuple[float, float]:
         raise NotImplementedError("score method must be implemented by the user")
+
+    def fit_dataset_model_(
+            self,
+            model: object,
+            dataset,
+            **hp
+    ) -> object:
+        raise NotImplementedError("fit_dataset_model_ method must be implemented by the user")
 
     def score_on_dataset(
             self,
