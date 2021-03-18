@@ -4,7 +4,7 @@ from tests.objective_functions.objective_function import ObjectiveFuncHpOptimize
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 from tests.pytorch_items.pytorch_datasets import get_torch_MNIST_X_y, get_torch_Cifar10_X_y
 import time
-from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
+from tests.pytorch_items.pytorch_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
 import numpy as np
 
 
