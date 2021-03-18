@@ -433,20 +433,35 @@ class ParameterGenerator:
         )
 
     def _add_annotations_to_html_fig_(self, fig, x_y_dict, **kwargs):
-        fig.update_layout(
-            annotations=[
-                dict(text="Hyper-parameter:", showarrow=False,
-                     x=0.89, y=1.1, xref="paper", yref="paper", align="left",
-                     xanchor="right", yanchor="middle"),
+        annotations = [
+            dict(text="Hyper-parameter:", showarrow=False,
+                 x=0.89, y=1.1, xref="paper", yref="paper", align="left",
+                 xanchor="right", yanchor="middle")
+        ]
+        if kwargs.get("add_best_hp_annotation", False):
+            annotations.append(
                 dict(text=f"Predicted best hyper-parameters:"
                           f" {self.get_best_params_repr(**kwargs.get('get_best_param_kwargs', {}))}",
                      showarrow=False,
                      x=0.1, y=-0.1, xref="paper", yref="paper", align="left",
                      xanchor="left", yanchor="top")
-            ]
-        )
+            )
+        fig.update_layout(annotations=annotations)
 
-    def write_optimization_to_html(self, **kwargs):
+    def write_optimization_to_html(self, **kwargs) -> go.Figure:
+        """
+        Write the optimization search in an interactive html file.
+
+        Parameters
+        ----------
+        kwargs:
+            add_best_hp_annotation (bool): True to add a annotation that show the predicted best hyper-parameters.
+             Default False.
+
+        Returns
+        -------
+        The html figure.
+        """
         x_y_dict = self._compute_x_y_dict(**kwargs)
         fig = self._init_html_fig(x_y_dict, **kwargs)
 
