@@ -1,5 +1,5 @@
-#  <p align="center"> AutoMLpy </p>
-<p align="center"> <img width="460" height="300" src="https://github.com/JeremieGince/AutoMLpy/blob/main/images/logo_001.png?raw=true"> </p>
+[comment] #  <p align="center"> AutoMLpy </p>
+<p align="center"> <img width="1000" height="500" src="https://github.com/JeremieGince/AutoMLpy/blob/main/images/logo_001.png?raw=true"> </p>
 ---------------------------------------------------------------------------
 
 This package is an automatic machine learning module whose function is to optimize the hyper-parameters 
