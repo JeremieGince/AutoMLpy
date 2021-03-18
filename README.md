@@ -250,5 +250,72 @@ fig = param_gen.write_optimization_to_html(show=True, **save_kwargs)
  # Other examples
  Examples on how to use this package are in the folder "./examples". There you can find the previous example 
  with _Tensorflow_ and an example with _pyTorch_.
+ 
+ 
+ 
+ 
+ ---------------------------------------------------------------------------
+ # Structure of the repository
+````
+AutoMLpy/
+|
+|-- examples/
+|   |-- pytorch_example.ipynb
+|   |-- tensorflow_example.ipynb
+|
+|-- src/
+|   |-- optimizers/
+|   |   |-- __init__.py
+|   |   |-- optimizer.py
+|
+|   |-- parameter_generators/
+|   |   |-- __init__.py
+|   |   |-- gp_search.py
+|   |   |-- grid_search.py
+|   |   |-- parameter_generator.py
+|   |   |-- random_search.py
+|
+|   |-- __init__.py
+|   |-- logging_tools.py
+|   |-- tools.py
+|
+|-- tests/
+|   |-- comparisons/
+|   |   |-- __init__.py
+|   |   |-- comparison_itrAndTime_per_dim.py
+|   |   |-- optimisation-time_per_nb_workers.py
+|   |   |-- showing_acquisitions_per_algorithm.py
+|
+|   |-- objective_functions/
+|   |   |-- __init__.py
+|   |   |-- objective_function.py
+|   |   |--  vectorized_objective_function.py
+|
+|   |-- pytorch_items/
+|   |   |-- __init__.py
+|   |   |-- pytorch_datasets.py
+|   |   |-- pytorch_ho_optimizers.py
+|   |   |-- pytorch_models.py
+|
+|   |-- tensorflow_items/
+|   |   |-- __init__.py
+|   |   |-- tf_datasets.py
+|   |   |-- tf_ho_optimizers.py
+|   |   |-- tf_models.py
+|
+|   |-- __init__.py
+|   |-- gp_optimizer_test.py
+|   |-- grid_optimizer_test.py
+|   |-- random_optimizer_test.py
+|   |-- random_search_test.py
+|   |-- tests_requirements.txt
+|
+|-- __init__.py
+|-- __main__.py
+|-- LISCENSE.mn
+|-- README.md
+|-- requirements.txt
+
+````
 
 
