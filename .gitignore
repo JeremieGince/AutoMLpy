@@ -103,9 +103,7 @@ __pycache__/
 .spyproject/
 .vscode/
 
-# fichiers de données trop gros
-views_docs.pkl
-src/backbones/pickles/bags-of-words.pkl
+
 /venv/
 tests/parameter_generators_data/RandomHpSearch/temp
 **temp
@@ -113,3 +111,13 @@ tests/parameter_generators_data/RandomHpSearch/temp
 tests/comparisons/parameter_generators_data
 tests/parameter_generators_data
 examples/parameter_generators_data
+
+
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
