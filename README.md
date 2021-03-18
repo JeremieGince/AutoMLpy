@@ -14,7 +14,7 @@ Everything is implemented to be compatible with the _Tensorflow_, _pyTorch_ and 
 # Installation
 
 ```
-pip install something...
+pip install AutoMLpy
 ```
 
 And that's it!
