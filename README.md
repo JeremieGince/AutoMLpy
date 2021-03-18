@@ -1,5 +1,5 @@
 # AutoMLpy
-======================
+---------------------------------------------------------------------------
 
 This package is an automatic machine learning module whose function is to optimize the hyper-parameters 
 of an automatic learning model. 
@@ -17,7 +17,6 @@ pip install something...
 And that's it!
 
  
- ---------------------------------------------------------------------------
  ---------------------------------------------------------------------------
 # Example - MNIST optimization with Tensorflow & Keras
 
