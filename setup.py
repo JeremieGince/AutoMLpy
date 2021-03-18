@@ -9,7 +9,7 @@ setup(
     url='https://github.com/JeremieGince/AutoMLpy',
     author='Jérémie Gince',
     author_email='gincejeremie@gmail.com',
-    license='MIT',
+    license='Apache 2.0',
     packages=['AutoMLpy'],
     zip_safe=False,
 )
