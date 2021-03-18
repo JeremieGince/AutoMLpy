@@ -565,7 +565,7 @@ if __name__ == '__main__':
     from src.parameter_generators.random_search import RandomHpSearch
     from tests.pytorch_items.pytorch_datasets import get_torch_Cifar10_X_y
     import time
-    from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer
+    from tests.pytorch_items.pytorch_hp_optimizers import PoutyneCifar10HpOptimizer
     import numpy as np
 
     from src.logging_tools import logs_file_setup, log_device_setup, DeepLib
