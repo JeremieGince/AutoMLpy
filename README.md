@@ -92,7 +92,7 @@ Now we make a function that return a keras model given a set of hyper-parameters
 ```python
 def get_tf_mnist_model(**hp):
 
-    if hp.get("use_conv"):
+    if hp.get("use_conv", False):
         model = tf.keras.models.Sequential([
             # Convolution layers
             tf.keras.layers.Conv2D(10, 3, padding="same", input_shape=(28, 28, 1)),
