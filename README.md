@@ -1,4 +1,5 @@
 # AutoMLpy
+======================
 
 This package is an automatic machine learning module whose function is to optimize the hyper-parameters 
 of an automatic learning model. 
@@ -9,11 +10,14 @@ Everything is implemented to be compatible with the _Tensorflow_, _pyTorch_ and 
 
 # Installation
 
+```
 pip install something...
+```
 
 And that's it!
 
  
+ ---------------------------------------------------------------------------
  ---------------------------------------------------------------------------
 # Example - MNIST optimization with Tensorflow & Keras
 
@@ -243,6 +247,7 @@ You can visualize the optimization with a interactive html file.
 fig = param_gen.write_optimization_to_html(show=True, **save_kwargs)
 ```
  
+ ---------------------------------------------------------------------------
  # Other examples
  Examples on how to use this package are in the folder "./examples". There you can find the previous example 
  with _Tensorflow_ and an example with _pyTorch_.
