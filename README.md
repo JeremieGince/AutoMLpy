@@ -317,6 +317,8 @@ AutoMLpy/
 |-- __main__.py
 |-- LISCENSE.mn
 |-- README.md
+|-- setup.py
+|-- version.py
 |-- requirements.txt
 
 ````
