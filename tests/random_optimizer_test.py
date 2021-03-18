@@ -1,10 +1,18 @@
 import unittest
 from src.parameter_generators.random_search import RandomHpSearch
+
+# Pytorch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 from tests.pytorch_items.pytorch_datasets import get_torch_MNIST_X_y, get_torch_Cifar10_X_y
-import time
 from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
+
+# Tensorflow
+from tests.tensorflow_items.tf_datasets import get_tf_mnist_dataset
+from tests.tensorflow_items.tf_hp_optimizers import KerasMNISTHpOptimizer
+
+# Utility modules
+import time
 import numpy as np
 
 
@@ -210,61 +218,50 @@ class TestRandomHpOptimizerVisionProblemPytorch(unittest.TestCase):
 
 
 class TestRandomHpOptimizerVisionProblemTensorflow(unittest.TestCase):
-    def test_optimize_Cifar10(self):
+    def test_optimize_MNIST(self):
         # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
-        cifar10_X_y_dict = get_torch_Cifar10_X_y()
 
-        cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
+        mnist_train, mnist_test = get_tf_mnist_dataset()
+
+        mnist_hp_optimizer = KerasMNISTHpOptimizer()
 
         hp_space = dict(
-            epochs=list(range(1, 26)),
-            batch_size=[32, 64],
+            epochs=list(range(1, 16)),
             learning_rate=np.linspace(1e-4, 1e-1, 50),
             nesterov=[True, False],
             momentum=np.linspace(0.01, 0.99, 50),
-            use_batchnorm=[True, False],
-            pre_normalized=[True, False],
+            use_conv=[True, False],
         )
-        param_gen = RandomHpSearch(hp_space, max_seconds=60 * 60 * 1, max_itr=1_000)
+        param_gen = RandomHpSearch(hp_space, max_seconds=60*1, max_itr=1_000)
 
         save_kwargs = dict(
-            save_name=f"cifar10_hp_opt",
-            title="Random search: Cifar10",
+            save_name=f"tf_mnist_hp_opt",
+            title="Random search: MNIST",
         )
 
         start_time = time.time()
-        param_gen = cifar10_hp_optimizer.optimize(
-            param_gen,
-            cifar10_X_y_dict["train"]["x"],
-            cifar10_X_y_dict["train"]["y"],
-            n_splits=2,
-            save_kwargs=save_kwargs,
+        param_gen = mnist_hp_optimizer.optimize_on_dataset(
+            param_gen, mnist_train, save_kwargs=save_kwargs,
         )
         end_time = time.time()
         elapsed_time = end_time - start_time
 
         opt_hp = param_gen.get_best_param()
 
-        model = cifar10_hp_optimizer.build_model(**opt_hp)
-        cifar10_hp_optimizer.fit_model_(
-            model,
-            cifar10_X_y_dict["train"]["x"],
-            cifar10_X_y_dict["train"]["y"],
-            **opt_hp
+        model = mnist_hp_optimizer.build_model(**opt_hp)
+        mnist_hp_optimizer.fit_dataset_model_(
+            model, mnist_train, **opt_hp
         )
 
-        test_acc, _ = cifar10_hp_optimizer.score(
-            model,
-            cifar10_X_y_dict["test"]["x"],
-            cifar10_X_y_dict["test"]["y"],
-            **opt_hp
+        test_acc, _ = mnist_hp_optimizer.score_on_dataset(
+            model, mnist_test, **opt_hp
         )
 
         param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
         self.assertTrue(
-            test_acc >= 0.7,
-            f"Cifar10 --> Random Gen result: {test_acc*100:.3f}%"
+            test_acc >= 0.985,
+            f"MNIST --> Random Gen result: {test_acc*100:.3f}%"
         )
         self.assertTrue(
             elapsed_time <= 1.15 * param_gen.max_seconds,
