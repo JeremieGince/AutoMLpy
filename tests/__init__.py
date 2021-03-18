@@ -2,6 +2,7 @@ from tests.objective_functions.vectorized_objective_function import VectorizedOb
 import numpy as np
 from src.parameter_generators import SearchType, GridHpSearch, RandomHpSearch, search_type_2_type
 from src import logs_file_setup, log_device_setup, DeepLib
+from src import HpOptimizer
 
 
 def execute_optimisation(
