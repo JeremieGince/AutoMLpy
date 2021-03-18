@@ -1,4 +1,4 @@
-# AutoMLpy
+#  <p align="center"> AutoMLpy </p>
 ---------------------------------------------------------------------------
 
 This package is an automatic machine learning module whose function is to optimize the hyper-parameters 
