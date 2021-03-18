@@ -174,7 +174,7 @@ mnist_train, mnist_test = get_tf_mnist_dataset()
 mnist_hp_optimizer = KerasMNISTHpOptimizer()
 ```
 
-After you will defined you hyper-parameters space with a dictionary like this.
+After you will defined your hyper-parameters space with a dictionary like this.
 
 
 ```python
@@ -212,7 +212,7 @@ param_gen = mnist_hp_optimizer.optimize_on_dataset(
 
 ## Testing
 
-Now, you can test the optimized hyper-parameters by fitting again we the full train dataset. Yes with the full dataset, cause in the optimization phase a cross-validation is made which crop your train dataset by half. Plus, it's time to test the fitted model on the test dataset.
+Now, you can test the optimized hyper-parameters by fitting again with the full train dataset. Yes with the full dataset, cause in the optimization phase a cross-validation is made which crop your train dataset by half. Plus, it's time to test the fitted model on the test dataset.
 
 
 ```python
