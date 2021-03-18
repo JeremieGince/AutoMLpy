@@ -1,8 +1,0 @@
-{
-    "epochs": 15,
-    "batch_size": 32,
-    "learning_rate": 0.1,
-    "nesterov": false,
-    "momentum": 0.6465306122448979,
-    "pre_normalized": true
-}
