@@ -1,8 +1,9 @@
 from setuptools import setup
+from .version import __version__
 
 setup(
     name='AutoMLpy',
-    version='0.0.1',
+    version=__version__,
     description="This package is an automatic machine learning module whose function"
                 " is to optimize the hyper-parameters of an automatic learning model.",
     url='https://github.com/JeremieGince/AutoMLpy',
