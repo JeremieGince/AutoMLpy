@@ -252,7 +252,7 @@ fig = param_gen.write_optimization_to_html(show=True, **save_kwargs)
  ---------------------------------------------------------------------------
  # Other examples
  Examples on how to use this package are in the folder "./examples". There you can find the previous example 
- with _Tensorflow_ and an example with _pyTorch_.
+ with [_Tensorflow_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/tensorflow_example.ipynb) and an example with [_pyTorch_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/pytorch_example.ipynb).
  
  
  
