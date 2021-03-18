@@ -5,7 +5,7 @@ from src.parameter_generators.random_search import RandomHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 from tests.pytorch_items.pytorch_datasets import get_torch_MNIST_X_y, get_torch_Cifar10_X_y
-from tests.pytorch_items.poutyne_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
+from tests.pytorch_items.pytorch_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
 
 # Tensorflow
 from tests.tensorflow_items.tf_datasets import get_tf_mnist_dataset
