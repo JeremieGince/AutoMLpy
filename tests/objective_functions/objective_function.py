@@ -48,10 +48,9 @@ class ObjectiveFuncHpOptimizer(HpOptimizer):
               X: np.ndarray = None,
               y: np.ndarray = None,
               **hp
-              ) -> Tuple[float, float]:
+              ) -> float:
         z = model(hp.get("x0"), hp.get("x1"), **self.params)
-        test_loss, test_acc = (1.0 - z / self.max) ** 2, z
-        return test_acc, 0.0
+        return z
 
 
 if __name__ == '__main__':
@@ -64,7 +63,7 @@ if __name__ == '__main__':
     obj_func_hp_optimizer = ObjectiveFuncHpOptimizer()
     func = obj_func_hp_optimizer.build_model()
     print(f"Maximum of objective function: {obj_func_hp_optimizer.max:.3f}")
-    Z, _ = obj_func_hp_optimizer.score(func, x0=obj_func_hp_optimizer.meshgrid[0], x1=obj_func_hp_optimizer.meshgrid[1])
+    Z = obj_func_hp_optimizer.score(func, x0=obj_func_hp_optimizer.meshgrid[0], x1=obj_func_hp_optimizer.meshgrid[1])
 
     # ----------------- Figure -------------------- #
     fig = go.Figure(data=[go.Surface(x=obj_func_hp_optimizer.hp_space["x0"],
@@ -102,7 +101,7 @@ if __name__ == '__main__':
     )
 
     opt_hp = opt_param_gen.get_best_param()
-    test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(), x0=opt_hp["x0"], x1=opt_hp["x1"])
+    test_acc = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(), x0=opt_hp["x0"], x1=opt_hp["x1"])
 
     assert test_acc >= 0.95, f"Random Gen result: {test_acc:.2f}% in {time.time() - start_time:.2f} [s]"
     print(f"{opt_hp}, test_acc: {test_acc}")
