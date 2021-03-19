@@ -79,6 +79,22 @@ class HpOptimizer:
             X_val=None, y_val=None,
             **hp
     ) -> object:
+        """
+        Method used to fit the model to optimize given a set of hyper-parameters.
+
+        Parameters
+        ----------
+        model: The model to fitted. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
+        X_val: The validation input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        y_val: The validation labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
+        hp: The hyper-parameters that come from the parameter generator.
+
+        Returns
+        -------
+        The fitted model.
+        """
         raise NotImplementedError("fit_model_ method must be implemented by the user")
 
     def score(
@@ -86,7 +102,21 @@ class HpOptimizer:
             model: object,
             X, y,
             **hp
-    ) -> Tuple[float, float]:
+    ) -> float:
+        """
+        Method used to get the score of the trained model given a set of hyper-parameters.
+
+        Parameters
+        ----------
+        model: The model to fitted. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
+        hp: The hyper-parameters that come from the parameter generator.
+
+        Returns
+        -------
+        The normalized score as a float between 0 and 1.
+        """
         raise NotImplementedError("score method must be implemented by the user")
 
     def fit_dataset_model_(
@@ -95,6 +125,19 @@ class HpOptimizer:
             dataset,
             **hp
     ) -> object:
+        """
+        Method used to fit the model to optimize given a set of hyper-parameters.
+
+        Parameters
+        ----------
+        model: The model to fitted. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        dataset: The dataset used to train the model. (Union[torch.utils.data.Dataset, tf.data.Dataset])
+        hp: The hyper-parameters that come from the parameter generator.
+
+        Returns
+        -------
+        The fitted model.
+        """
         raise NotImplementedError("fit_dataset_model_ method must be implemented by the user")
 
     def score_on_dataset(
@@ -102,7 +145,20 @@ class HpOptimizer:
             model: object,
             dataset,
             **hp
-    ) -> Tuple[float, float]:
+    ) -> float:
+        """
+        Method used to get the score of the trained model given a set of hyper-parameters.
+
+        Parameters
+        ----------
+        model: The model to fitted. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        dataset: The dataset used to train the model. (Union[torch.utils.data.Dataset, tf.data.Dataset])
+        hp: The hyper-parameters that come from the parameter generator.
+
+        Returns
+        -------
+        The normalized score as a float between 0 and 1.
+        """
         raise NotImplementedError("score_dataset method must be implemented by the user")
 
     def __call__(self, *args, **kwargs):
@@ -130,6 +186,8 @@ class HpOptimizer:
         nb_workers: number of used cpu. Must be a int or the string "max". Default: 1.
         save_kwargs: Saving kwargs of the parameter generator.
         verbose: True to print some stats else False.
+        kwargs:
+            stop_criterion: If the score once reach this criterion the optimization will stop. (float)
 
         Return
         ---------
@@ -184,15 +242,15 @@ class HpOptimizer:
 
         Parameters
         ----------
-        param_gen
-        X: The training data.
-        y: The training labels.
+        param_gen: The parameter generator.
+        X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
         n_splits: Number of split for the kfold.
         workers_required: Number of used cpu. Must be a int or the string "max". Default: 1.
 
         Returns
         -------
-
+        The list of outputs made by the multiple trials as list of tuples (parameters, score).
         """
         if workers_required > 1:
             outputs = self._execute_multiple_param_gen_iteration_on_X_y(workers_required, param_gen, X, y, n_splits)
@@ -214,10 +272,10 @@ class HpOptimizer:
 
         Parameters
         ----------
-        param_gen
-        trial_outputs
-        stop_criterion
-        progress
+        param_gen: The parameter generator.
+        trial_outputs:
+        stop_criterion: If the score once reach this criterion the optimization will stop. (float)
+        progress:
         verbose:
 
         Returns
@@ -259,7 +317,7 @@ class HpOptimizer:
         Parameters
         ----------
         param_gen: The parameter generator.
-        dataset: The dataset used to train the model.
+        dataset: The dataset used to train the model. (Union[torch.utils.data.Dataset, tf.data.Dataset])
         nb_workers: Number of used cpu. Must be a int or the string "max". Default: 1.
         save_kwargs: Saving kwargs of the parameter generator.
         verbose: True to print some stats else False.
@@ -322,7 +380,7 @@ class HpOptimizer:
 
         Returns
         -------
-
+        The list of outputs made by the multiple trials as list of tuples (parameters, score).
         """
         if workers_required > 1:
             outputs = self._execute_multiple_param_gen_iteration_on_dataset(workers_required, param_gen, dataset)
@@ -375,8 +433,8 @@ class HpOptimizer:
         ----------
         nb_workers: Number of multiprocessing process to start.
         param_gen: The current parameter generator.
-        X: The training data.
-        y: The training labels.
+        X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
         n_splits: Number of split for the kfold.
 
         Returns
@@ -404,8 +462,8 @@ class HpOptimizer:
         Parameters
         ----------
         param_gen: The current parameter generator.
-        X: The training data.
-        y: The training labels.
+        X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
         n_splits: Number of split for the kfold.
 
         Returns
@@ -422,6 +480,19 @@ class HpOptimizer:
             X, y,
             n_splits: int = 2,
     ) -> float:
+        """
+
+        Parameters
+        ----------
+        params
+        X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
+        n_splits
+
+        Returns
+        -------
+        The output score of the trial.
+        """
         kf = KFold(n_splits=n_splits, shuffle=True)
 
         mean_score = 0.0
@@ -432,7 +503,7 @@ class HpOptimizer:
                 model = self.build_model(**params)
                 self.fit_model_(model, sub_X_train, sub_y_train, **params)
 
-                score, _ = self.score(model, sub_X_test, sub_y_test, **params)
+                score = self.score(model, sub_X_test, sub_y_test, **params)
                 mean_score = (j * mean_score + score) / (j + 1)
             except Exception as e:
                 logging.error(str(e))
@@ -446,6 +517,19 @@ class HpOptimizer:
             train_index,
             test_index,
     ):
+        """
+
+        Parameters
+        ----------
+        X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
+        train_index
+        test_index
+
+        Returns
+        -------
+
+        """
         if isinstance(X, np.ndarray):
             sub_X_train, sub_X_test = X[train_index], X[test_index]
             sub_y_train, sub_y_test = y[train_index], y[test_index]
@@ -517,6 +601,17 @@ class HpOptimizer:
             params,
             dataset,
     ) -> float:
+        """
+
+        Parameters
+        ----------
+        params
+        dataset
+
+        Returns
+        -------
+        The output score of the trial.
+        """
         n_splits = 2
         train_size = int(len(dataset)//n_splits)
         test_size = len(dataset) - train_size
@@ -529,7 +624,7 @@ class HpOptimizer:
                 model = self.build_model(**params)
                 self.fit_dataset_model_(model, sub_dataset_train, **params)
 
-                score, _ = self.score_on_dataset(model, sub_dataset_test, **params)
+                score = self.score_on_dataset(model, sub_dataset_test, **params)
                 mean_score = (k * mean_score + score) / (k + 1)
             except Exception as e:
                 logging.error(str(e))
@@ -544,6 +639,19 @@ class HpOptimizer:
             test_size: int,
             k: int
     ):
+        """
+
+        Parameters
+        ----------
+        dataset
+        train_size
+        test_size
+        k
+
+        Returns
+        -------
+
+        """
         if optional_modules["torch"] and isinstance(dataset, torch.Tensor):
             raise NotImplementedError("torch dataset is not implemented yet")
         elif optional_modules["tensorflow"] and isinstance(dataset, tf.data.Dataset):
@@ -565,7 +673,7 @@ if __name__ == '__main__':
     from src.parameter_generators.random_search import RandomHpSearch
     from tests.pytorch_items.pytorch_datasets import get_torch_Cifar10_X_y
     import time
-    from tests.pytorch_items.pytorch_hp_optimizers import PoutyneCifar10HpOptimizer
+    from tests.pytorch_items.pytorch_hp_optimizers import TorchCifar10HpOptimizer
     import numpy as np
 
     from src.logging_tools import logs_file_setup, log_device_setup, DeepLib
@@ -574,7 +682,7 @@ if __name__ == '__main__':
     log_device_setup(DeepLib.Pytorch)
 
     cifar10_X_y_dict = get_torch_Cifar10_X_y()
-    cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
+    cifar10_hp_optimizer = TorchCifar10HpOptimizer()
 
     hp_space = dict(
         epochs=list(range(1, 26)),
