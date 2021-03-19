@@ -1,8 +1,6 @@
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 import numpy as np
-from AutoMLpy.parameter_generators import SearchType, GridHpSearch, RandomHpSearch, search_type_2_type
-from AutoMLpy import logs_file_setup, log_device_setup, DeepLib
-from AutoMLpy import HpOptimizer
+from src.AutoMLpy import SearchType, search_type_2_type
 
 
 def execute_optimisation(

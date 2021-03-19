@@ -43,8 +43,8 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 # Importing the HPOptimizer and the RandomHpSearch from the AutoMLpy package.
-from AutoMLpy import HpOptimizer
-from AutoMLpy import RandomHpSearch
+from src.AutoMLpy import HpOptimizer
+from src.AutoMLpy import RandomHpSearch
 
 ```
 

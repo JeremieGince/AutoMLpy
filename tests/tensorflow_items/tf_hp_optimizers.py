@@ -1,9 +1,5 @@
 import tensorflow as tf
-import tensorflow_datasets as tfds
-from AutoMLpy.optimizers.optimizer import HpOptimizer
-from typing import Union, Tuple
-import numpy as np
-import pandas as pd
+from src.AutoMLpy.optimizers.optimizer import HpOptimizer
 from tests.tensorflow_items.tf_models import get_tf_mnist_model
 
 

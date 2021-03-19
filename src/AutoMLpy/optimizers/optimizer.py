@@ -1,11 +1,9 @@
 import warnings
 import multiprocessing
-import numpy as np
 import tqdm
 from sklearn.model_selection import KFold
 from typing import Union, List, Tuple
 from multiprocessing import Pool
-from copy import deepcopy
 import logging
 
 optional_modules = {}
@@ -27,7 +25,7 @@ try:
 except ModuleNotFoundError:
     optional_modules["tensorflow"] = False
 
-from AutoMLpy.parameter_generators.parameter_generator import ParameterGenerator
+from ..parameter_generators import ParameterGenerator
 
 
 class ParamGenType:
@@ -674,13 +672,13 @@ class HpOptimizer:
 
 
 if __name__ == '__main__':
-    from AutoMLpy.parameter_generators.random_search import RandomHpSearch
+    from src.AutoMLpy import RandomHpSearch
     from tests.pytorch_items.pytorch_datasets import get_torch_Cifar10_X_y
     import time
     from tests.pytorch_items.pytorch_hp_optimizers import TorchCifar10HpOptimizer
     import numpy as np
 
-    from AutoMLpy.logging_tools import logs_file_setup, log_device_setup, DeepLib
+    from src.AutoMLpy.logging_tools import logs_file_setup, log_device_setup, DeepLib
 
     logs_file_setup(__file__)
     log_device_setup(DeepLib.Pytorch)

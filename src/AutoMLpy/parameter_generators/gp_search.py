@@ -8,7 +8,7 @@ from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
-from AutoMLpy.parameter_generators.parameter_generator import ParameterGenerator
+from .parameter_generator import ParameterGenerator
 
 
 class GPOHpSearch(ParameterGenerator):

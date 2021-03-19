@@ -1,8 +1,8 @@
-from typing import Tuple, Callable
+from typing import Callable
 
 import numpy as np
 
-from AutoMLpy.optimizers.optimizer import HpOptimizer
+from src.AutoMLpy.optimizers.optimizer import HpOptimizer
 
 
 def objective_function(x, y, **kwargs):
@@ -56,7 +56,7 @@ class ObjectiveFuncHpOptimizer(HpOptimizer):
 if __name__ == '__main__':
     import plotly.graph_objects as go
     import time
-    from AutoMLpy.parameter_generators.random_search import RandomHpSearch
+    from src.AutoMLpy import RandomHpSearch
     import os
 
     # ----------------- Initialization -------------------- #

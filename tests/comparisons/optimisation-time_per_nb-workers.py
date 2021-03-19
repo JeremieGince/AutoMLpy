@@ -1,11 +1,11 @@
-from AutoMLpy.parameter_generators import SearchType
-from AutoMLpy import logs_file_setup, log_device_setup
+from src.AutoMLpy import SearchType
+from src.AutoMLpy import logs_file_setup, log_device_setup
 from tests import execute_optimisation
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import os
-from AutoMLpy.tools import plotly_colors
+from src.AutoMLpy import plotly_colors
 import logging
 import multiprocessing
 

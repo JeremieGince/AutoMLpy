@@ -17,8 +17,8 @@ setup(
     author='Jérémie Gince',
     author_email='gincejeremie@gmail.com',
     license='Apache 2.0',
-    package_dir={"": ""},
-    packages=setuptools.find_packages(),
+    package_dir={"": "src"},
+    packages=setuptools.find_packages(where="src"),
     python_requires=">=3.6",
     classifiers=[
         "Programming Language :: Python :: 3",

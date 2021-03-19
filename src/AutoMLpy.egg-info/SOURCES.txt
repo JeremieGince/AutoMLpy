@@ -1,0 +1,17 @@
+README.md
+setup.py
+src/AutoMLpy/__init__.py
+src/AutoMLpy/logging_tools.py
+src/AutoMLpy/tools.py
+src/AutoMLpy.egg-info/PKG-INFO
+src/AutoMLpy.egg-info/SOURCES.txt
+src/AutoMLpy.egg-info/dependency_links.txt
+src/AutoMLpy.egg-info/requires.txt
+src/AutoMLpy.egg-info/top_level.txt
+src/AutoMLpy/optimizers/__init__.py
+src/AutoMLpy/optimizers/optimizer.py
+src/AutoMLpy/parameter_generators/__init__.py
+src/AutoMLpy/parameter_generators/gp_search.py
+src/AutoMLpy/parameter_generators/grid_search.py
+src/AutoMLpy/parameter_generators/parameter_generator.py
+src/AutoMLpy/parameter_generators/random_search.py

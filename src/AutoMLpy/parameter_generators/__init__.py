@@ -1,7 +1,8 @@
 import enum
-from AutoMLpy.parameter_generators.grid_search import GridHpSearch
-from AutoMLpy.parameter_generators.random_search import RandomHpSearch
-from AutoMLpy.parameter_generators.gp_search import GPOHpSearch
+from .grid_search import GridHpSearch
+from .random_search import RandomHpSearch
+from .gp_search import GPOHpSearch
+from .parameter_generator import ParameterGenerator
 
 
 class SearchType(enum.Enum):

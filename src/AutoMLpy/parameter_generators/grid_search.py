@@ -1,5 +1,5 @@
 from typing import Dict, Union, List, Iterable
-from AutoMLpy.parameter_generators.parameter_generator import ParameterGenerator
+from .parameter_generator import ParameterGenerator
 
 
 class GridHpSearch(ParameterGenerator):

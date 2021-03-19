@@ -1,4 +1,4 @@
-from AutoMLpy import logging_tools
+from src.AutoMLpy import logging_tools
 import logging
 
 if __name__ == '__main__':

@@ -3,11 +3,11 @@ import torch
 import torch.optim as optim
 from torch.utils.data import Subset,  DataLoader, TensorDataset
 from torchvision.transforms import ToTensor
-from typing import Union, Tuple
+from typing import Union
 import numpy as np
 from torchvision.datasets.mnist import MNIST
 
-from AutoMLpy.optimizers.optimizer import HpOptimizer
+from src.AutoMLpy.optimizers.optimizer import HpOptimizer
 from tests.pytorch_items.pytorch_models import CifarNet, MnistNet, CifarNetBatchNorm
 from tests.pytorch_items.pytorch_training import train_pytorch_network
 

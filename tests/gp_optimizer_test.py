@@ -1,5 +1,5 @@
 import unittest
-from AutoMLpy.parameter_generators.gp_search import GPOHpSearch
+from src.AutoMLpy import GPOHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 import time
