@@ -119,8 +119,8 @@ def get_tf_mnist_model(**hp):
 
 ## The Optimizer Model
 
-It's time to implement the optimizer model. You juste have to implement the following methods: "build_model",
-"fit_dataset_model_" and "score_on_dataset". Those methods must respect there signatur and output type. The objective 
+It's time to implement the optimizer model. You just have to implement the following methods: "build_model",
+"fit_dataset_model_" and "score_on_dataset". Those methods must respect their signature and output type. The objective 
 here is to make the building, the training and the score phase depend on some hyper-parameters. So the optimizer can 
 use those to find the best set of hp.
 
@@ -175,7 +175,7 @@ mnist_train, mnist_test = get_tf_mnist_dataset()
 mnist_hp_optimizer = KerasMNISTHpOptimizer()
 ```
 
-After you will defined your hyper-parameters space with a dictionary like this.
+After you will define your hyper-parameters space with a dictionary like this.
 
 
 ```python
@@ -188,8 +188,8 @@ hp_space = dict(
 )
 ```
 
-It's time to defined you hp search algorithm and give it your budget in time and iteration. Here we will test for 
-5 minutes and 1 000 iterations maximum.
+It's time to define your hp search algorithm and give it your budget in time and iteration. Here we will test for 
+10 minutes and 100 iterations maximum.
 
 
 ```python
@@ -197,7 +197,7 @@ param_gen = RandomHpSearch(hp_space, max_seconds=60*10, max_itr=100)
 ```
 
 Finally, you start the optimization by giving your parameter generator to the optimize method. Note that the 
-"stop_criterion" argument is to stop the optimization when the given score is reach. It's really useful to save some 
+"stop_criterion" argument is to stop the optimization when the given score is reached. It's really useful to save some 
 time.
 
 
@@ -217,7 +217,7 @@ param_gen = mnist_hp_optimizer.optimize_on_dataset(
 ## Testing
 
 Now, you can test the optimized hyper-parameters by fitting again with the full train dataset. Yes with the full 
-dataset, cause in the optimization phase a cross-validation is made which crop your train dataset by half. Plus, 
+dataset, because in the optimization phase a cross-validation is made which crop your train dataset by half. Plus, 
 it's time to test the fitted model on the test dataset.
 
 
@@ -248,7 +248,7 @@ pp.pprint(opt_hp)
 
 ## Visualization
 
-You can visualize the optimization with a interactive html file.
+You can visualize the optimization with an interactive html file.
 
 
 ```python
@@ -257,9 +257,9 @@ fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, **save_kwa
  
  ---------------------------------------------------------------------------
  # Other examples
- Examples on how to use this package are in the folder "./examples". There you can find the previous example 
- with [_Tensorflow_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/tensorflow_example.ipynb) and an 
- example with [_pyTorch_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/pytorch_example.ipynb).
+ Examples on how to use this package are in the folder [./examples](https://github.com/JeremieGince/AutoMLpy/blob/main/examples). 
+ There you can find the previous example with [_Tensorflow_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/tensorflow_example.ipynb) 
+ and an example with [_pyTorch_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/pytorch_example.ipynb).
  
  
  
