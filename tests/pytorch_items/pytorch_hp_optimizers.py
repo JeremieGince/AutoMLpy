@@ -1,6 +1,3 @@
-from src.optimizers.optimizer import HpOptimizer
-from tests.pytorch_items.pytorch_models import CifarNet, MnistNet, CifarNetBatchNorm
-import poutyne as pt
 import pandas as pd
 import torch
 import torch.optim as optim
@@ -9,6 +6,10 @@ from torchvision.transforms import ToTensor
 from typing import Union, Tuple
 import numpy as np
 from torchvision.datasets.mnist import MNIST
+
+from src.optimizers.optimizer import HpOptimizer
+from tests.pytorch_items.pytorch_models import CifarNet, MnistNet, CifarNetBatchNorm
+from tests.pytorch_items.pytorch_training import train_pytorch_network
 
 
 def get_MNIST_dataloaders(seed: int = 42):
@@ -38,21 +39,16 @@ def get_MNIST_dataloaders(seed: int = 42):
     return dict(train=train_loader, valid=valid_loader, test=test_loader)
 
 
-class PoutyneMNISTHpOptimizer(HpOptimizer):
-    def build_model(self, **hp) -> object:
-        net = MnistNet()
-        optimizer = optim.SGD(net.parameters(),
-                              lr=hp.get("learning_rate", 1e-3),
-                              momentum=hp.get("momentum", 0.9),
-                              nesterov=hp.get("nesterov", True))
-        model = pt.Model(net, optimizer, 'cross_entropy', batch_metrics=['accuracy'])
+class TorchMNISTHpOptimizer(HpOptimizer):
+    def build_model(self, **hp) -> torch.nn.Module:
+        model = MnistNet()
         if torch.cuda.is_available():
             model.cuda()
         return model
 
     def fit_model_(
             self,
-            model: pt.Model,
+            model: torch.nn.Module,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
             verbose=False,
@@ -60,91 +56,106 @@ class PoutyneMNISTHpOptimizer(HpOptimizer):
     ) -> object:
         if hp.get("pre_normalized", True):
             X = X/torch.max(X)
-        history = model.fit_generator(
-            DataLoader(
-                TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
-                batch_size=hp.get("batch_size", 64),
-                num_workers=2,
-                shuffle=True
+
+        optimizer = optim.SGD(model.parameters(),
+                              lr=hp.get("learning_rate", 1e-3),
+                              momentum=hp.get("momentum", 0.9),
+                              nesterov=hp.get("nesterov", True))
+
+        train_pytorch_network(
+            model,
+            loaders=dict(
+                train=DataLoader(
+                    TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
+                    batch_size=hp.get("batch_size", 64),
+                    num_workers=2,
+                    shuffle=True
+                )
             ),
-            epochs=hp.get("epochs", 1),
-            verbose=verbose
+            verbose=verbose,
+            optimizer=optimizer,
+            **hp
         )
+
         return model
 
     def score(
             self,
-            model: pt.Model,
+            model: torch.nn.Module,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
             **hp
-    ) -> Tuple[float, float]:
+    ) -> float:
         if hp.get("pre_normalized", True):
             X = X/torch.max(X)
-        test_loss, test_acc = model.evaluate_generator(
-            DataLoader(
-                TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
-                batch_size=hp.get("batch_size", 64),
-                num_workers=2
-            )
-        )
-        return test_acc/100, 0.0
+
+        model_device = next(model.parameters()).device
+        if isinstance(X, torch.Tensor):
+            X = X.float().to(model_device)
+            y = y.to(model_device)
+        test_acc = np.mean((torch.argmax(model(X), dim=-1) == y).cpu().detach().numpy())
+        return test_acc
 
 
-class PoutyneCifar10HpOptimizer(HpOptimizer):
-    def build_model(self, **hp) -> pt.Model:
+class TorchCifar10HpOptimizer(HpOptimizer):
+    def build_model(self, **hp) -> torch.nn.Module:
         if hp.get("use_batchnorm", True):
-            net = CifarNetBatchNorm()
+            model = CifarNetBatchNorm()
         else:
-            net = CifarNet()
-        optimizer = optim.SGD(net.parameters(),
-                              lr=hp.get("learning_rate", 1e-3),
-                              momentum=hp.get("momentum", 0.0),
-                              nesterov=hp.get("nesterov", False))
-        model = pt.Model(net, optimizer, 'cross_entropy', batch_metrics=['accuracy'])
+            model = CifarNet()
+
         if torch.cuda.is_available():
             model.cuda()
         return model
 
     def fit_model_(
             self,
-            model: pt.Model,
+            model: torch.nn.Module,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
             verbose=False,
             **hp
-    ) -> pt.Model:
+    ) -> torch.nn.Module:
         if hp.get("pre_normalized", True):
             X = X/torch.max(X)
-        history = model.fit_generator(
-            DataLoader(
-                TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
-                batch_size=hp.get("batch_size", 64),
-                num_workers=2,
-                shuffle=True
+
+        optimizer = optim.SGD(model.parameters(),
+                              lr=hp.get("learning_rate", 1e-3),
+                              momentum=hp.get("momentum", 0.9),
+                              nesterov=hp.get("nesterov", True))
+
+        train_pytorch_network(
+            model,
+            loaders=dict(
+                train=DataLoader(
+                    TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
+                    batch_size=hp.get("batch_size", 64),
+                    num_workers=2,
+                    shuffle=True
+                )
             ),
-            epochs=hp.get("epochs", 1),
-            verbose=verbose
+            verbose=verbose,
+            optimizer=optimizer,
+            **hp
         )
         return model
 
     def score(
             self,
-            model: pt.Model,
+            model: torch.nn.Module,
             X: Union[np.ndarray, pd.DataFrame, torch.Tensor],
             y: Union[np.ndarray, torch.Tensor],
             **hp
-    ) -> Tuple[float, float]:
+    ) -> float:
         if hp.get("pre_normalized", True):
             X = X/torch.max(X)
-        test_loss, test_acc = model.evaluate_generator(
-            DataLoader(
-                TensorDataset(torch.FloatTensor(X), torch.LongTensor(y)),
-                batch_size=hp.get("batch_size", 64),
-                num_workers=2
-            )
-        )
-        return test_acc/100, 0.0
+
+        model_device = next(model.parameters()).device
+        if isinstance(X, torch.Tensor):
+            X = X.float().to(model_device)
+            y = y.to(model_device)
+        test_acc = np.mean((torch.argmax(model(X), dim=-1) == y).cpu().detach().numpy())
+        return test_acc
 
 
 if __name__ == '__main__':
@@ -153,25 +164,25 @@ if __name__ == '__main__':
     hp = dict(
         epochs=15,
         batch_size=64,
-        learning_rate=0.1,
+        learning_rate=1e-3,
         nesterov=True,
         momentum=0.9,
         use_batchnorm=True,
-        pre_normalized=True,
+        pre_normalized=False,
     )
     X_y_dict = get_torch_Cifar10_X_y()
-    opt = PoutyneCifar10HpOptimizer()
-    model = opt.build_model(**hp)
+    opt = TorchCifar10HpOptimizer()
+    model_ = opt.build_model(**hp)
     opt.fit_model_(
-        model,
+        model_,
         X_y_dict["train"]["x"],
         X_y_dict["train"]["y"],
         verbose=True,
         **hp
     )
 
-    test_acc, _ = opt.score(
-        model,
+    test_acc = opt.score(
+        model_.cpu(),
         X_y_dict["test"]["x"],
         X_y_dict["test"]["y"],
         **hp
