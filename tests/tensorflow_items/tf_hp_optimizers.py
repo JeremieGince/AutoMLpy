@@ -1,6 +1,6 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from src.optimizers.optimizer import HpOptimizer
+from AutoMLpy.optimizers.optimizer import HpOptimizer
 from typing import Union, Tuple
 import numpy as np
 import pandas as pd

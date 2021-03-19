@@ -3,7 +3,7 @@ import os
 import time
 import numpy as np
 
-from src.optimizers.optimizer import HpOptimizer
+from AutoMLpy.optimizers.optimizer import HpOptimizer
 
 
 def vectorized_objective_function__(x, **kwargs):
@@ -89,7 +89,7 @@ class VectorizedObjectiveFuncHpOptimizer(HpOptimizer):
 
 if __name__ == '__main__':
     import plotly.graph_objects as go
-    from src.parameter_generators.gp_search import GPOHpSearch
+    from AutoMLpy.parameter_generators.gp_search import GPOHpSearch
 
     # ----------------- Initialization -------------------- #
     obj_func_hp_optimizer = VectorizedObjectiveFuncHpOptimizer()

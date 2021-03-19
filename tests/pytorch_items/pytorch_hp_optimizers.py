@@ -7,7 +7,7 @@ from typing import Union, Tuple
 import numpy as np
 from torchvision.datasets.mnist import MNIST
 
-from src.optimizers.optimizer import HpOptimizer
+from AutoMLpy.optimizers.optimizer import HpOptimizer
 from tests.pytorch_items.pytorch_models import CifarNet, MnistNet, CifarNetBatchNorm
 from tests.pytorch_items.pytorch_training import train_pytorch_network
 

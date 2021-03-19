@@ -1,4 +1,4 @@
-from src.parameter_generators import SearchType
+from AutoMLpy.parameter_generators import SearchType
 from tests import execute_optimisation
 import plotly.graph_objects as go
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
@@ -71,7 +71,7 @@ def show_optimisations(
 
 
 if __name__ == '__main__':
-    from src import logs_file_setup
+    from AutoMLpy import logs_file_setup
 
     logs_file_setup(__file__)
     show_optimisations([1, ], stop_criterion=None, max_itr=1000, max_seconds=60*60, dark_mode=False)

@@ -1,5 +1,5 @@
 import unittest
-from src.parameter_generators.random_search import RandomHpSearch
+from AutoMLpy.parameter_generators.random_search import RandomHpSearch
 
 # Pytorch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer

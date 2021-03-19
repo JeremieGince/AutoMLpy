@@ -1,5 +1,5 @@
 import unittest
-from src.parameter_generators.grid_search import GridHpSearch
+from AutoMLpy.parameter_generators.grid_search import GridHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 from tests.pytorch_items.pytorch_datasets import get_torch_MNIST_X_y, get_torch_Cifar10_X_y

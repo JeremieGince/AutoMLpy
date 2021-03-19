@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Dict, Union, List, Iterable
-from src.parameter_generators.parameter_generator import ParameterGenerator
+from AutoMLpy.parameter_generators.parameter_generator import ParameterGenerator
 
 
 class RandomHpSearch(ParameterGenerator):

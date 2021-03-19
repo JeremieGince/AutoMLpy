@@ -1,6 +1,6 @@
 import unittest
 import time
-from src.parameter_generators.random_search import RandomHpSearch
+from AutoMLpy.parameter_generators.random_search import RandomHpSearch
 
 
 class TestRandomHpSearch(unittest.TestCase):

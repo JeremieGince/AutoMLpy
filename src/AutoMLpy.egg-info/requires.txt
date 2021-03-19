@@ -1,5 +1,0 @@
-tqdm>=4.56.0
-numpy>=1.19.5
-scikit-learn>=0.24.1
-plotly>=4.14.3
-pandas>=1.2.1
