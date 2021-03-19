@@ -260,11 +260,11 @@ class HpOptimizer:
 
     def _post_process_trial_(
             self,
-            param_gen,
-            trial_outputs,
-            stop_criterion,
-            progress,
-            verbose,
+            param_gen: ParameterGenerator,
+            trial_outputs: List[Tuple[dict, float]],
+            stop_criterion: float,
+            progress: tqdm.tqdm,
+            verbose: bool,
     ) -> bool:
         """
         Post process the outputs of the trial execution of the training.
@@ -273,10 +273,10 @@ class HpOptimizer:
         Parameters
         ----------
         param_gen: The parameter generator.
-        trial_outputs:
+        trial_outputs: The list of outputs made by the multiple trials as list of tuples (parameters, score).
         stop_criterion: If the score once reach this criterion the optimization will stop. (float)
-        progress:
-        verbose:
+        progress: Progress bar.
+        verbose: True to print some stats else False.
 
         Returns
         -------
@@ -476,18 +476,19 @@ class HpOptimizer:
 
     def _try_params_on_X_y(
             self,
-            params,
+            params: dict,
             X, y,
             n_splits: int = 2,
     ) -> float:
         """
+        Try a set of hyper-parameters on the model by using the methods implemented by the user.
 
         Parameters
         ----------
-        params
+        params: The trial hyper-parameters.
         X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
         y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
-        n_splits
+        n_splits: Number of split for the kfolding.
 
         Returns
         -------
@@ -516,19 +517,20 @@ class HpOptimizer:
             X, y,
             train_index,
             test_index,
-    ):
+    ) -> Tuple[tuple, tuple]:
         """
+        Take a subset of the entries X and y.
 
         Parameters
         ----------
         X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
         y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
-        train_index
-        test_index
+        train_index: The train indexes.
+        test_index: The test indexes.
 
         Returns
         -------
-
+        The subsets as (sub_X_train, sub_X_test), (sub_y_train, sub_y_test).
         """
         if isinstance(X, np.ndarray):
             sub_X_train, sub_X_test = X[train_index], X[test_index]
@@ -586,7 +588,7 @@ class HpOptimizer:
         Parameters
         ----------
         param_gen: The current parameter generator.
-        dataset: The dataset used to train the model.
+        dataset: The dataset used to train the model. (Union[torch.utils.data.Dataset, tf.data.Dataset])
 
         Returns
         -------
@@ -598,15 +600,16 @@ class HpOptimizer:
 
     def _try_params_on_dataset(
             self,
-            params,
+            params: dict,
             dataset,
     ) -> float:
         """
+        Try a set of hyper-parameters on the model by using the methods implemented by the user.
 
         Parameters
         ----------
-        params
-        dataset
+        params The trial hyper-parameters.
+        dataset: The dataset used to train the model. (Union[torch.utils.data.Dataset, tf.data.Dataset])
 
         Returns
         -------
@@ -638,19 +641,20 @@ class HpOptimizer:
             train_size: int,
             test_size: int,
             k: int
-    ):
+    ) -> Tuple:
         """
+        Take subsets of the input dataset.
 
         Parameters
         ----------
-        dataset
-        train_size
-        test_size
-        k
+        dataset: The dataset used to train the model. (Union[torch.utils.data.Dataset, tf.data.Dataset])
+        train_size: Size of the train subset.
+        test_size: Size of the test subset.
+        k: The shift index.
 
         Returns
         -------
-
+        The subsets as (sub_dataset_train, sub_dataset_test).
         """
         if optional_modules["torch"] and isinstance(dataset, torch.Tensor):
             raise NotImplementedError("torch dataset is not implemented yet")
