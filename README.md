@@ -43,8 +43,8 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 # Importing the HPOptimizer and the RandomHpSearch from the AutoMLpy package.
-from src import HpOptimizer
-from src import RandomHpSearch
+from AutoMLpy import HpOptimizer
+from AutoMLpy import RandomHpSearch
 
 ```
 
@@ -158,9 +158,9 @@ class KerasMNISTHpOptimizer(HpOptimizer):
             model: tf.keras.Model,
             dataset,
             **hp
-    ) -> Tuple[float, float]:
+    ) -> float:
         test_loss, test_acc = model.evaluate(dataset, verbose=0)
-        return test_acc, 0.0
+        return test_acc
 
 ```
 
@@ -265,6 +265,7 @@ AutoMLpy/
 |-- examples/
 |   |-- pytorch_example.ipynb
 |   |-- tensorflow_example.ipynb
+|   |-- examples_requirements.txt
 |
 |-- src/
 |   |-- optimizers/
