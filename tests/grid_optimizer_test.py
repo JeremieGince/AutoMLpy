@@ -4,7 +4,7 @@ from tests.objective_functions.objective_function import ObjectiveFuncHpOptimize
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 from tests.pytorch_items.pytorch_datasets import get_torch_MNIST_X_y, get_torch_Cifar10_X_y
 import time
-from tests.pytorch_items.pytorch_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
+from tests.pytorch_items.pytorch_hp_optimizers import TorchCifar10HpOptimizer, TorchMNISTHpOptimizer
 import numpy as np
 
 
@@ -31,8 +31,8 @@ class TestGridHpOptimizerObjFunc(unittest.TestCase):
 
         opt_hp = param_gen.get_best_param()
 
-        test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp),
-                                                  x0=opt_hp["x0"], x1=opt_hp["x1"])
+        test_acc = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp),
+                                               x0=opt_hp["x0"], x1=opt_hp["x1"])
 
         param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
@@ -67,7 +67,7 @@ class TestGridHpOptimizerObjFunc(unittest.TestCase):
 
         opt_hp = param_gen.get_best_param()
 
-        test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp), **opt_hp)
+        test_acc = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp), **opt_hp)
 
         param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
@@ -82,7 +82,7 @@ class TestGridHpOptimizerVisionProblem(unittest.TestCase):
         # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
         cifar10_X_y_dict = get_torch_Cifar10_X_y()
 
-        cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
+        cifar10_hp_optimizer = TorchCifar10HpOptimizer()
 
         hp_space = dict(
             epochs=list(range(1, 26)),
@@ -121,8 +121,8 @@ class TestGridHpOptimizerVisionProblem(unittest.TestCase):
             **opt_hp
         )
 
-        test_acc, _ = cifar10_hp_optimizer.score(
-            model,
+        test_acc = cifar10_hp_optimizer.score(
+            model.cpu(),
             cifar10_X_y_dict["test"]["x"],
             cifar10_X_y_dict["test"]["y"],
             **opt_hp
@@ -148,7 +148,7 @@ class TestGridHpOptimizerVisionProblem(unittest.TestCase):
 
         mnist_X_y_dict = get_torch_MNIST_X_y()
 
-        mnist_hp_optimizer = PoutyneMNISTHpOptimizer()
+        mnist_hp_optimizer = TorchMNISTHpOptimizer()
 
         hp_space = dict(
             epochs=list(range(1, 16)),
@@ -186,8 +186,8 @@ class TestGridHpOptimizerVisionProblem(unittest.TestCase):
             **opt_hp
         )
 
-        test_acc, _ = mnist_hp_optimizer.score(
-            model,
+        test_acc = mnist_hp_optimizer.score(
+            model.cpu(),
             mnist_X_y_dict["test"]["x"],
             mnist_X_y_dict["test"]["y"],
             **opt_hp
