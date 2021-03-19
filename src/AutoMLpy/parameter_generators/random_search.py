@@ -34,8 +34,6 @@ class RandomHpSearch(ParameterGenerator):
     def get_trial_param(self) -> Dict[Union[str, int], object]:
         """
         Returned a set of trial parameter.
-
-        Increase the current_itr counter.
         """
         idx = self._idx_choices.pop(0)
 
@@ -44,7 +42,4 @@ class RandomHpSearch(ParameterGenerator):
             np.random.shuffle(self._idx_choices)
 
         t_param = self.convert_subspace_to_param(self.xx[idx])
-        # self.write_optimization_to_html(show=False, save=True,
-        #                                 save_dir=f"{self.default_save_dir}/temp/html_files/",
-        #                                 save_name=f"itr{self.current_itr}")
         return t_param
