@@ -63,7 +63,6 @@ def get_torch_MNIST_X_y(**kwargs):
     X_y_dict = {phase: dict(x=[], y=[]) for phase in datasets}
     for phase, dataset in datasets.items():
         for x, y in dataset:
-            # x, y = datasets[phase].transforms(x, y)
             X_y_dict[phase]["x"].append(x)
             X_y_dict[phase]["y"].append(y)
     for phase in X_y_dict:
@@ -129,46 +128,6 @@ def get_torch_Cifar10_X_y(**kwargs):
         X_y_dict[phase]["x"] = torch.stack(X_y_dict[phase]["x"], dim=0)
         X_y_dict[phase]["y"] = torch.LongTensor(X_y_dict[phase]["y"])
     return X_y_dict
-
-
-class SpiralDataset(Dataset):
-    """
-    Un jeu de données synthétique de spiral pour PyTorch.
-    Args:
-        n_points (int): Le nombre de point désiré dans le jeu de données
-        noise (float): Quantité de bruit désiré dans le jeu de données
-    """
-
-    def __init__(self, n_points=1000, noise=0.2):
-        self.points = torch.Tensor(n_points, 7)
-        self.labels = torch.LongTensor(n_points)
-
-        n_positive = n_points // 2
-        n_negative = n_points = n_positive
-
-        for i, point in enumerate(self._gen_spiral_points(n_positive, 0, noise)):
-            self.points[i], self.labels[i] = point, 1
-
-        for i, point in enumerate(self._gen_spiral_points(n_negative, math.pi, noise)):
-            self.points[i + n_positive] = point
-            self.labels[i + n_positive] = 0
-
-    def _gen_spiral_points(self, n_points, delta_t, noise):
-        for i in range(n_points):
-            r = i / n_points * 5
-            t = 1.75 * i / n_points * 2 * math.pi + delta_t
-            x = r * math.sin(t) + random.uniform(-1, 1) * noise
-            y = r * math.cos(t) + random.uniform(-1, 1) * noise
-            yield torch.Tensor([x, y, x**2, y**2, x * y, math.sin(x), math.sin(y)])
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, i):
-        return self.points[i], self.labels[i]
-
-    def to_numpy(self):
-        return self.points.numpy(), self.labels.numpy()
 
 
 if __name__ == '__main__':
