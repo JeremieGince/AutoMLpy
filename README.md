@@ -43,8 +43,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 # Importing the HPOptimizer and the RandomHpSearch from the AutoMLpy package.
-from src.AutoMLpy import HpOptimizer
-from src.AutoMLpy import RandomHpSearch
+from AutoMLpy import HpOptimizer, RandomHpSearch
 
 ```
 
@@ -121,7 +120,9 @@ def get_tf_mnist_model(**hp):
 ## The Optimizer Model
 
 It's time to implement the optimizer model. You juste have to implement the following methods: "build_model",
-"fit_dataset_model_" and "score_on_dataset". Those methods must respect there signatur and output type. The objective here is to make the building, the training and the score phase depend on some hyper-parameters. So the optimizer can use those to find the best set of hp.
+"fit_dataset_model_" and "score_on_dataset". Those methods must respect there signatur and output type. The objective 
+here is to make the building, the training and the score phase depend on some hyper-parameters. So the optimizer can 
+use those to find the best set of hp.
 
 
 ```python
@@ -194,7 +195,9 @@ It's time to defined you hp search algorithm and give it your budget in time and
 param_gen = RandomHpSearch(hp_space, max_seconds=60*10, max_itr=100)
 ```
 
-Finally, you start the optimization by giving your parameter generator to the optimize method. Note that the "stop_criterion" argument is to stop the optimization when the given score is reach. It's really useful to save some time.
+Finally, you start the optimization by giving your parameter generator to the optimize method. Note that the 
+"stop_criterion" argument is to stop the optimization when the given score is reach. It's really useful to save some 
+time.
 
 
 ```python
@@ -212,7 +215,9 @@ param_gen = mnist_hp_optimizer.optimize_on_dataset(
 
 ## Testing
 
-Now, you can test the optimized hyper-parameters by fitting again with the full train dataset. Yes with the full dataset, cause in the optimization phase a cross-validation is made which crop your train dataset by half. Plus, it's time to test the fitted model on the test dataset.
+Now, you can test the optimized hyper-parameters by fitting again with the full train dataset. Yes with the full 
+dataset, cause in the optimization phase a cross-validation is made which crop your train dataset by half. Plus, 
+it's time to test the fitted model on the test dataset.
 
 
 ```python
@@ -252,7 +257,8 @@ fig = param_gen.write_optimization_to_html(show=True, **save_kwargs)
  ---------------------------------------------------------------------------
  # Other examples
  Examples on how to use this package are in the folder "./examples". There you can find the previous example 
- with [_Tensorflow_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/tensorflow_example.ipynb) and an example with [_pyTorch_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/pytorch_example.ipynb).
+ with [_Tensorflow_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/tensorflow_example.ipynb) and an 
+ example with [_pyTorch_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/pytorch_example.ipynb).
  
  
  
@@ -268,20 +274,21 @@ AutoMLpy/
 |   |-- examples_requirements.txt
 |
 |-- src/
-|   |-- optimizers/
-|   |   |-- __init__.py
-|   |   |-- optimizer.py
+|   |-- AutoMLpy/
+|   |   |-- optimizers/
+|   |   |   |-- __init__.py
+|   |   |   |-- optimizer.py
 |
-|   |-- parameter_generators/
-|   |   |-- __init__.py
-|   |   |-- gp_search.py
-|   |   |-- grid_search.py
-|   |   |-- parameter_generator.py
-|   |   |-- random_search.py
+|   |   |-- parameter_generators/
+|   |   |   |-- __init__.py
+|   |   |   |-- gp_search.py
+|   |   |   |-- grid_search.py
+|   |   |   |-- parameter_generator.py
+|   |   |   |-- random_search.py
 |
-|   |-- __init__.py
-|   |-- logging_tools.py
-|   |-- tools.py
+|   |   |-- __init__.py
+|   |   |-- logging_tools.py
+|   |   |-- tools.py
 |
 |-- tests/
 |   |-- comparisons/
