@@ -82,10 +82,9 @@ class VectorizedObjectiveFuncHpOptimizer(HpOptimizer):
               X: np.ndarray = None,
               y: np.ndarray = None,
               **hp
-              ) -> Tuple[float, float]:
+              ) -> float:
         z = model(np.array([hp[f"x{i}"] for i in range(self.dim)]), **self.params)
-        test_loss, test_acc = (1.0 - z / self.max) ** 2, (z - self.min) / (self.max - self.min)
-        return test_acc, 0.0
+        return (z - self.min) / (self.max - self.min)
 
 
 if __name__ == '__main__':
@@ -97,7 +96,7 @@ if __name__ == '__main__':
     obj_func_hp_optimizer.set_dim(2)
     func = obj_func_hp_optimizer.build_model()
     print(f"Maximum of objective function: {obj_func_hp_optimizer.max:.3f}")
-    Z, _ = obj_func_hp_optimizer.score(
+    Z = obj_func_hp_optimizer.score(
         func,
         **{f"x{i}": obj_func_hp_optimizer.meshgrid[i] for i in range(obj_func_hp_optimizer.dim)}
     )
@@ -181,7 +180,7 @@ if __name__ == '__main__':
     )
 
     opt_hp = opt_param_gen.get_best_param(from_history=True)
-    test_acc, _ = obj_func_hp_optimizer.score(
+    test_acc = obj_func_hp_optimizer.score(
         obj_func_hp_optimizer.build_model(),
         **opt_hp
     )
