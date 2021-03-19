@@ -549,6 +549,13 @@ class ParameterGenerator:
             add_best_hp_annotation: True to add a annotation that show the predicted best hyper-parameters.
              Default False. (bool)
             show: True to show the figure else False. (bool)
+            title: The title of the figure. (str)
+            dark_mode: True to use the dark mode else False. (bool)
+            add_best_hp_annotation: True to activate the "Predicted best hyper-parameters:" label.
+            get_best_param_kwargs: The kwargs of the method get_best_params_repr.
+            save: True to save the figure else False. (bool)
+            save_dir: The saving directory. (str)
+            save_name: The saving name. (str)
 
         Returns
         -------
@@ -577,7 +584,7 @@ class ParameterGenerator:
         ----------
         fig: The html figure.
         kwargs:
-            cave: True to save the figure else False. (bool)
+            save: True to save the figure else False. (bool)
             save_dir: The saving directory. (str)
             save_name: The saving name. (str)
 
