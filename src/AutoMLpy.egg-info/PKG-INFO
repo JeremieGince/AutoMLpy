@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: AutoMLpy
-Version: 0.0.1
+Version: 0.0.2
 Summary: This package is an automatic machine learning module whose function is to optimize the hyper-parameters of an automatic learning model.Code at: https://github.com/JeremieGince/AutoMLpy .
 Home-page: https://github.com/JeremieGince/AutoMLpy
 Author: Jérémie Gince
