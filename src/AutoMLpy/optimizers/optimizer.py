@@ -5,6 +5,7 @@ from sklearn.model_selection import KFold
 from typing import Union, List, Tuple
 from multiprocessing import Pool
 import logging
+import numpy as np
 
 optional_modules = {}
 try:
@@ -676,7 +677,6 @@ if __name__ == '__main__':
     from tests.pytorch_items.pytorch_datasets import get_torch_Cifar10_X_y
     import time
     from tests.pytorch_items.pytorch_hp_optimizers import TorchCifar10HpOptimizer
-    import numpy as np
 
     from src.AutoMLpy.logging_tools import logs_file_setup, log_device_setup, DeepLib
 
