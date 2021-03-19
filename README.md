@@ -300,6 +300,7 @@ AutoMLpy/
 |   |   |-- pytorch_datasets.py
 |   |   |-- pytorch_ho_optimizers.py
 |   |   |-- pytorch_models.py
+|   |   |-- pytorch_training.py
 |
 |   |-- tensorflow_items/
 |   |   |-- __init__.py
