@@ -188,7 +188,8 @@ hp_space = dict(
 )
 ```
 
-It's time to defined you hp search algorithm and give it your budget in time and iteration.
+It's time to defined you hp search algorithm and give it your budget in time and iteration. Here we will test for 
+5 minutes and 1 000 iterations maximum.
 
 
 ```python
@@ -251,7 +252,7 @@ You can visualize the optimization with a interactive html file.
 
 
 ```python
-fig = param_gen.write_optimization_to_html(show=True, **save_kwargs)
+fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, **save_kwargs)
 ```
  
  ---------------------------------------------------------------------------
