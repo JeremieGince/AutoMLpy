@@ -35,21 +35,11 @@ class KerasMNISTHpOptimizer(HpOptimizer):
         )
         return model
 
-    def score(
-            self,
-            model: tf.keras.Model,
-            X: Union[np.ndarray, pd.DataFrame, tf.Tensor],
-            y: Union[np.ndarray, tf.Tensor],
-            **hp
-    ) -> Tuple[float, float]:
-        test_loss, test_acc = model
-        return test_acc/100, 0.0
-
     def score_on_dataset(
             self,
             model: tf.keras.Model,
             dataset,
             **hp
-    ) -> Tuple[float, float]:
+    ) -> float:
         test_loss, test_acc = model.evaluate(dataset, verbose=0)
-        return test_acc, 0.0
+        return test_acc
