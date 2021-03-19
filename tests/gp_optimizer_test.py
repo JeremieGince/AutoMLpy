@@ -29,8 +29,8 @@ class TestGPHpOptimizerObjFunc(unittest.TestCase):
 
         opt_hp = param_gen.get_best_param()
 
-        test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp),
-                                                  x0=opt_hp["x0"], x1=opt_hp["x1"])
+        test_acc = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp),
+                                               x0=opt_hp["x0"], x1=opt_hp["x1"])
 
         param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
@@ -65,7 +65,7 @@ class TestGPHpOptimizerObjFunc(unittest.TestCase):
 
         opt_hp = param_gen.get_best_param()
 
-        test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp), **opt_hp)
+        test_acc = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp), **opt_hp)
 
         param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
