@@ -546,8 +546,9 @@ class ParameterGenerator:
         Parameters
         ----------
         kwargs:
-            add_best_hp_annotation (bool): True to add a annotation that show the predicted best hyper-parameters.
-             Default False.
+            add_best_hp_annotation: True to add a annotation that show the predicted best hyper-parameters.
+             Default False. (bool)
+            show: True to show the figure else False. (bool)
 
         Returns
         -------
