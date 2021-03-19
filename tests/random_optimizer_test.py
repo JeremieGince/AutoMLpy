@@ -156,7 +156,6 @@ class TestRandomHpOptimizerVisionProblemPytorch(unittest.TestCase):
         # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
 
         mnist_X_y_dict = get_torch_MNIST_X_y()
-
         mnist_hp_optimizer = TorchMNISTHpOptimizer()
 
         hp_space = dict(
