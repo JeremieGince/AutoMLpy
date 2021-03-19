@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: AutoMLpy
-Version: 0.0.2
+Version: 0.0.3
 Summary: This package is an automatic machine learning module whose function is to optimize the hyper-parameters of an automatic learning model.Code at: https://github.com/JeremieGince/AutoMLpy .
 Home-page: https://github.com/JeremieGince/AutoMLpy
 Author: Jérémie Gince
@@ -51,8 +51,7 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
         import tensorflow_datasets as tfds
         
         # Importing the HPOptimizer and the RandomHpSearch from the AutoMLpy package.
-        from src.AutoMLpy import HpOptimizer
-        from src.AutoMLpy import RandomHpSearch
+        from AutoMLpy import HpOptimizer, RandomHpSearch
         
         ```
         
@@ -128,8 +127,10 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
         
         ## The Optimizer Model
         
-        It's time to implement the optimizer model. You juste have to implement the following methods: "build_model",
-        "fit_dataset_model_" and "score_on_dataset". Those methods must respect there signatur and output type. The objective here is to make the building, the training and the score phase depend on some hyper-parameters. So the optimizer can use those to find the best set of hp.
+        It's time to implement the optimizer model. You just have to implement the following methods: "build_model",
+        "fit_dataset_model_" and "score_on_dataset". Those methods must respect their signature and output type. The objective 
+        here is to make the building, the training and the score phase depend on some hyper-parameters. So the optimizer can 
+        use those to find the best set of hp.
         
         
         ```python
@@ -182,7 +183,7 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
         mnist_hp_optimizer = KerasMNISTHpOptimizer()
         ```
         
-        After you will defined your hyper-parameters space with a dictionary like this.
+        After you will define your hyper-parameters space with a dictionary like this.
         
         
         ```python
@@ -195,14 +196,17 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
         )
         ```
         
-        It's time to defined you hp search algorithm and give it your budget in time and iteration.
+        It's time to define your hp search algorithm and give it your budget in time and iteration. Here we will test for 
+        10 minutes and 100 iterations maximum.
         
         
         ```python
         param_gen = RandomHpSearch(hp_space, max_seconds=60*10, max_itr=100)
         ```
         
-        Finally, you start the optimization by giving your parameter generator to the optimize method. Note that the "stop_criterion" argument is to stop the optimization when the given score is reach. It's really useful to save some time.
+        Finally, you start the optimization by giving your parameter generator to the optimize method. Note that the 
+        "stop_criterion" argument is to stop the optimization when the given score is reached. It's really useful to save some 
+        time.
         
         
         ```python
@@ -220,7 +224,9 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
         
         ## Testing
         
-        Now, you can test the optimized hyper-parameters by fitting again with the full train dataset. Yes with the full dataset, cause in the optimization phase a cross-validation is made which crop your train dataset by half. Plus, it's time to test the fitted model on the test dataset.
+        Now, you can test the optimized hyper-parameters by fitting again with the full train dataset. Yes with the full 
+        dataset, because in the optimization phase a cross-validation is made which crop your train dataset by half. Plus, 
+        it's time to test the fitted model on the test dataset.
         
         
         ```python
@@ -250,17 +256,18 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
         
         ## Visualization
         
-        You can visualize the optimization with a interactive html file.
+        You can visualize the optimization with an interactive html file.
         
         
         ```python
-        fig = param_gen.write_optimization_to_html(show=True, **save_kwargs)
+        fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, **save_kwargs)
         ```
          
          ---------------------------------------------------------------------------
          # Other examples
-         Examples on how to use this package are in the folder "./examples". There you can find the previous example 
-         with [_Tensorflow_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/tensorflow_example.ipynb) and an example with [_pyTorch_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/pytorch_example.ipynb).
+         Examples on how to use this package are in the folder [./examples](https://github.com/JeremieGince/AutoMLpy/blob/main/examples). 
+         There you can find the previous example with [_Tensorflow_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/tensorflow_example.ipynb) 
+         and an example with [_pyTorch_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/pytorch_example.ipynb).
          
          
          
@@ -276,20 +283,21 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
         |   |-- examples_requirements.txt
         |
         |-- src/
-        |   |-- optimizers/
-        |   |   |-- __init__.py
-        |   |   |-- optimizer.py
+        |   |-- AutoMLpy/
+        |   |   |-- optimizers/
+        |   |   |   |-- __init__.py
+        |   |   |   |-- optimizer.py
         |
-        |   |-- parameter_generators/
-        |   |   |-- __init__.py
-        |   |   |-- gp_search.py
-        |   |   |-- grid_search.py
-        |   |   |-- parameter_generator.py
-        |   |   |-- random_search.py
+        |   |   |-- parameter_generators/
+        |   |   |   |-- __init__.py
+        |   |   |   |-- gp_search.py
+        |   |   |   |-- grid_search.py
+        |   |   |   |-- parameter_generator.py
+        |   |   |   |-- random_search.py
         |
-        |   |-- __init__.py
-        |   |-- logging_tools.py
-        |   |-- tools.py
+        |   |   |-- __init__.py
+        |   |   |-- logging_tools.py
+        |   |   |-- tools.py
         |
         |-- tests/
         |   |-- comparisons/
