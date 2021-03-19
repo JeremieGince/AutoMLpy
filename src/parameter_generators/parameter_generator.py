@@ -51,9 +51,11 @@ class ParameterGenerator:
         values_dict:
             A dictionary which contained all the possible values of each hyper-parameter
             used to generate the exploring score_space.
-        kwargs: {
-
-        }
+        kwargs:
+            max_itr: Maximum iteration of the parameter generator. (int)
+            max_seconds: Maximum seconds of the parameter generator. (int)
+            save_dir: The saving directory. (str)
+            save_name: The saving name. (str)
 
         Attributes
         ----------
@@ -118,10 +120,24 @@ class ParameterGenerator:
 
     @property
     def elapse_time(self) -> float:
+        """
+        Time elapsed from the beginning of the generation.
+
+        Returns
+        -------
+        The elapsed time.
+        """
         return time.time() - self.start_time
 
     @property
     def last_itr_elapse_time(self) -> float:
+        """
+        Time elapsed from the beginning of the generation to the last iteration.
+
+        Returns
+        -------
+        The elapsed time of the last itr.
+        """
         return self.elapse_time_per_iteration[self.current_itr-1]
 
     def __len__(self) -> int:
@@ -179,9 +195,6 @@ class ParameterGenerator:
         score: The associated score of the trial parameters.
         """
         self.history.append((param, score))
-        # for p_name in param:
-        #     if p_name in self._param_name_to_idx:
-        #         param[p_name] = self._param_name_to_idx[p_name][param[p_name]]
 
     def add_conversion_tables_param_name_to_idx(self, param_name: str, values: Iterable) -> Dict[Hashable, int]:
         """
@@ -347,7 +360,26 @@ class ParameterGenerator:
         fig.update_yaxes(title="Score [-]")
         return fig
 
-    def _compute_x_y_dict(self, **kwargs) -> Dict:
+    def _compute_x_y_dict(
+            self,
+            **kwargs
+    ) -> Dict[str, Dict[str, np.ndarray]]:
+        """
+        Create a x_y dictionnary from the history. The output values will be in the form:
+            parameter_name: {
+                x: [list of trials],
+                y: [list of scores]
+            }
+
+        Parameters
+        ----------
+        kwargs:
+            None
+
+        Returns
+        -------
+        The x_y dict.
+        """
         x_y_dict = {p_name: dict() for p_name in self._values_names}
 
         for p_name in x_y_dict:
@@ -361,7 +393,25 @@ class ParameterGenerator:
             x_y_dict[p_name] = dict(x=x, y=y)
         return x_y_dict
 
-    def _init_html_fig(self, x_y_dict: Dict, **kwargs) -> go.Figure:
+    def _init_html_fig(
+            self,
+            x_y_dict: Dict[str, Dict[str, np.ndarray]],
+            **kwargs
+    ) -> go.Figure:
+        """
+        Initialize the html figure of the generation.
+
+        Parameters
+        ----------
+        x_y_dict: The x_y dict computed by the method "_compute_x_y_dict".
+        kwargs:
+            title: The title of the figure. (str)
+            dark_mode: True to use the dark mode else False. (bool)
+
+        Returns
+        -------
+        The html figure.
+        """
         fig = go.Figure()
 
         fig.add_trace(
@@ -397,7 +447,27 @@ class ParameterGenerator:
 
         return fig
 
-    def _add_dropdown_html_fig_(self, fig, x_y_dict, **kwargs):
+    def _add_dropdown_html_fig_(
+            self,
+            fig: go.Figure,
+            x_y_dict: Dict[str, Dict[str, np.ndarray]],
+            **kwargs
+    ):
+        """
+        Add the dropdown in the given html figure. This dropdown is to add the option of choosing
+        which hyper-parameter to show in the figure.
+
+        Parameters
+        ----------
+        fig: The html figure.
+        x_y_dict: The x_y dict computed by the method "_compute_x_y_dict".
+        kwargs:
+            None
+
+        Returns
+        -------
+        None
+        """
         # Add dropdown
         fig.update_layout(
             updatemenus=[
@@ -432,7 +502,28 @@ class ParameterGenerator:
             ]
         )
 
-    def _add_annotations_to_html_fig_(self, fig, x_y_dict, **kwargs):
+    def _add_annotations_to_html_fig_(
+            self,
+            fig,
+            x_y_dict,
+            **kwargs
+    ):
+        """
+        Add some annotation the the html figure like the label "Hyper-parameter:" of the dropdown and the
+        "Predicted best hyper-parameters:" label if activated.
+
+        Parameters
+        ----------
+        fig: The html figure.
+        x_y_dict: The x_y dict computed by the method "_compute_x_y_dict".
+        kwargs:
+            add_best_hp_annotation: True to activate the "Predicted best hyper-parameters:" label.
+            get_best_param_kwargs: The kwargs of the method get_best_params_repr.
+
+        Returns
+        -------
+        None
+        """
         annotations = [
             dict(text="Hyper-parameter:", showarrow=False,
                  x=0.89, y=1.1, xref="paper", yref="paper", align="left",
@@ -474,7 +565,25 @@ class ParameterGenerator:
 
         return fig
 
-    def save_html_fig(self, fig, **kwargs):
+    def save_html_fig(
+            self,
+            fig: go.Figure,
+            **kwargs
+    ):
+        """
+
+        Parameters
+        ----------
+        fig: The html figure.
+        kwargs:
+            cave: True to save the figure else False. (bool)
+            save_dir: The saving directory. (str)
+            save_name: The saving name. (str)
+
+        Returns
+        -------
+        None
+        """
         save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/html_files/")
         os.makedirs(save_dir, exist_ok=True)
 
@@ -484,6 +593,19 @@ class ParameterGenerator:
             fig.write_html(path)
 
     def save_best_param(self, **kwargs):
+        """
+        Save the best hyper-parameters found in a json file.
+
+        Parameters
+        ----------
+        kwargs:
+            save_dir: The saving directory. (str)
+            save_name: The saving name. (str)
+
+        Returns
+        -------
+        None
+        """
         save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/optimal_hp/")
         save_name = kwargs.get("save_name", f"{self.default_save_name}-opt_hp")
         os.makedirs(save_dir, exist_ok=True)
