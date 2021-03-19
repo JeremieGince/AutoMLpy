@@ -3,7 +3,7 @@ argon2-cffi==20.1.0
 astunparse==1.6.3
 async-generator==1.10
 attrs==20.3.0
-AutoMLpy==0.0.2
+AutoMLpy==0.0.3
 backcall==0.2.0
 bleach==3.3.0
 Brotli==1.0.9
