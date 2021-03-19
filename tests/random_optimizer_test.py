@@ -5,7 +5,7 @@ from src.parameter_generators.random_search import RandomHpSearch
 from tests.objective_functions.objective_function import ObjectiveFuncHpOptimizer
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 from tests.pytorch_items.pytorch_datasets import get_torch_MNIST_X_y, get_torch_Cifar10_X_y
-from tests.pytorch_items.pytorch_hp_optimizers import PoutyneCifar10HpOptimizer, PoutyneMNISTHpOptimizer
+from tests.pytorch_items.pytorch_hp_optimizers import TorchCifar10HpOptimizer, TorchMNISTHpOptimizer
 
 # Tensorflow
 from tests.tensorflow_items.tf_datasets import get_tf_mnist_dataset
@@ -39,8 +39,8 @@ class TestRandomHpOptimizerObjFunc(unittest.TestCase):
 
         opt_hp = param_gen.get_best_param()
 
-        test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp),
-                                                  x0=opt_hp["x0"], x1=opt_hp["x1"])
+        test_acc = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp),
+                                               x0=opt_hp["x0"], x1=opt_hp["x1"])
 
         param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
@@ -75,7 +75,7 @@ class TestRandomHpOptimizerObjFunc(unittest.TestCase):
 
         opt_hp = param_gen.get_best_param()
 
-        test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp), **opt_hp)
+        test_acc = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp), **opt_hp)
 
         param_gen.write_optimization_to_html(show=True, **save_kwargs)
 
@@ -90,7 +90,7 @@ class TestRandomHpOptimizerVisionProblemPytorch(unittest.TestCase):
         # http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html#43494641522d3130
         cifar10_X_y_dict = get_torch_Cifar10_X_y()
 
-        cifar10_hp_optimizer = PoutyneCifar10HpOptimizer()
+        cifar10_hp_optimizer = TorchCifar10HpOptimizer()
 
         hp_space = dict(
             epochs=list(range(1, 26)),
@@ -114,6 +114,7 @@ class TestRandomHpOptimizerVisionProblemPytorch(unittest.TestCase):
             cifar10_X_y_dict["train"]["x"],
             cifar10_X_y_dict["train"]["y"],
             n_splits=2,
+            stop_criterion=0.75,
             save_kwargs=save_kwargs,
         )
         end_time = time.time()
@@ -129,8 +130,8 @@ class TestRandomHpOptimizerVisionProblemPytorch(unittest.TestCase):
             **opt_hp
         )
 
-        test_acc, _ = cifar10_hp_optimizer.score(
-            model,
+        test_acc = cifar10_hp_optimizer.score(
+            model.cpu(),
             cifar10_X_y_dict["test"]["x"],
             cifar10_X_y_dict["test"]["y"],
             **opt_hp
@@ -156,7 +157,7 @@ class TestRandomHpOptimizerVisionProblemPytorch(unittest.TestCase):
 
         mnist_X_y_dict = get_torch_MNIST_X_y()
 
-        mnist_hp_optimizer = PoutyneMNISTHpOptimizer()
+        mnist_hp_optimizer = TorchMNISTHpOptimizer()
 
         hp_space = dict(
             epochs=list(range(1, 16)),
@@ -179,6 +180,7 @@ class TestRandomHpOptimizerVisionProblemPytorch(unittest.TestCase):
             mnist_X_y_dict["train"]["x"],
             mnist_X_y_dict["train"]["y"],
             n_splits=2,
+            stop_criterion=0.99,
             save_kwargs=save_kwargs,
         )
         end_time = time.time()
@@ -194,8 +196,8 @@ class TestRandomHpOptimizerVisionProblemPytorch(unittest.TestCase):
             **opt_hp
         )
 
-        test_acc, _ = mnist_hp_optimizer.score(
-            model,
+        test_acc = mnist_hp_optimizer.score(
+            model.cpu(),
             mnist_X_y_dict["test"]["x"],
             mnist_X_y_dict["test"]["y"],
             **opt_hp
@@ -232,7 +234,7 @@ class TestRandomHpOptimizerVisionProblemTensorflow(unittest.TestCase):
             momentum=np.linspace(0.01, 0.99, 50),
             use_conv=[True, False],
         )
-        param_gen = RandomHpSearch(hp_space, max_seconds=60*1, max_itr=1_000)
+        param_gen = RandomHpSearch(hp_space, max_seconds=60*60*1, max_itr=1_000)
 
         save_kwargs = dict(
             save_name=f"tf_mnist_hp_opt",
@@ -241,7 +243,7 @@ class TestRandomHpOptimizerVisionProblemTensorflow(unittest.TestCase):
 
         start_time = time.time()
         param_gen = mnist_hp_optimizer.optimize_on_dataset(
-            param_gen, mnist_train, save_kwargs=save_kwargs,
+            param_gen, mnist_train, save_kwargs=save_kwargs, stop_criterion=0.99,
         )
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -253,7 +255,7 @@ class TestRandomHpOptimizerVisionProblemTensorflow(unittest.TestCase):
             model, mnist_train, **opt_hp
         )
 
-        test_acc, _ = mnist_hp_optimizer.score_on_dataset(
+        test_acc = mnist_hp_optimizer.score_on_dataset(
             model, mnist_test, **opt_hp
         )
 
