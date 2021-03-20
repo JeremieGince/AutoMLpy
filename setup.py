@@ -10,7 +10,7 @@ setup(
     version=__version__,
     description="This package is an automatic machine learning module whose function"
                 " is to optimize the hyper-parameters of an automatic learning model."
-                "Code at: https://github.com/JeremieGince/AutoMLpy .",
+                " Code at: https://github.com/JeremieGince/AutoMLpy .",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/JeremieGince/AutoMLpy',
