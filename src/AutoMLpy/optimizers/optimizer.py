@@ -321,6 +321,8 @@ class HpOptimizer:
         nb_workers: Number of used cpu. Must be a int or the string "max". Default: 1.
         save_kwargs: Saving kwargs of the parameter generator.
         verbose: True to print some stats else False.
+        kwargs:
+            stop_criterion: If the score once reach this criterion the optimization will stop. (float)
 
         Return
         ---------
