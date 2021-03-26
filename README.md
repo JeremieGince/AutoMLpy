@@ -229,7 +229,7 @@ mnist_hp_optimizer.fit_dataset_model_(
     model, mnist_train, **opt_hp
 )
 
-test_acc, _ = mnist_hp_optimizer.score_on_dataset(
+test_acc = mnist_hp_optimizer.score_on_dataset(
     model, mnist_test, **opt_hp
 )
 
