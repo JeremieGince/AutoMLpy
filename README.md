@@ -261,77 +261,7 @@ fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, **save_kwa
  There you can find the previous example with [_Tensorflow_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/tensorflow_example.ipynb) 
  and an example with [_pyTorch_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/pytorch_example.ipynb).
  
- 
- 
- 
- ---------------------------------------------------------------------------
- # Structure of the repository
-````
-AutoMLpy/
-|
-|-- examples/
-|   |-- pytorch_example.ipynb
-|   |-- tensorflow_example.ipynb
-|   |-- examples_requirements.txt
-|
-|-- src/
-|   |-- AutoMLpy/
-|   |   |-- optimizers/
-|   |   |   |-- __init__.py
-|   |   |   |-- optimizer.py
-|
-|   |   |-- parameter_generators/
-|   |   |   |-- __init__.py
-|   |   |   |-- gp_search.py
-|   |   |   |-- grid_search.py
-|   |   |   |-- parameter_generator.py
-|   |   |   |-- random_search.py
-|
-|   |   |-- __init__.py
-|   |   |-- logging_tools.py
-|   |   |-- tools.py
-|
-|-- tests/
-|   |-- comparisons/
-|   |   |-- __init__.py
-|   |   |-- comparison_itrAndTime_per_dim.py
-|   |   |-- optimisation-time_per_nb_workers.py
-|   |   |-- showing_acquisitions_per_algorithm.py
-|
-|   |-- objective_functions/
-|   |   |-- __init__.py
-|   |   |-- objective_function.py
-|   |   |--  vectorized_objective_function.py
-|
-|   |-- pytorch_items/
-|   |   |-- __init__.py
-|   |   |-- pytorch_datasets.py
-|   |   |-- pytorch_ho_optimizers.py
-|   |   |-- pytorch_models.py
-|   |   |-- pytorch_training.py
-|
-|   |-- tensorflow_items/
-|   |   |-- __init__.py
-|   |   |-- tf_datasets.py
-|   |   |-- tf_ho_optimizers.py
-|   |   |-- tf_models.py
-|
-|   |-- __init__.py
-|   |-- gp_optimizer_test.py
-|   |-- grid_optimizer_test.py
-|   |-- random_optimizer_test.py
-|   |-- random_search_test.py
-|   |-- tests_requirements.txt
-|
-|-- __init__.py
-|-- __main__.py
-|-- LISCENSE.mn
-|-- README.md
-|-- setup.py
-|-- version.py
-|-- requirements.txt
 
-````
 
 ## License
 
