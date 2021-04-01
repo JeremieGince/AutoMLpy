@@ -263,8 +263,7 @@ fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, **save_kwa
  
 
 
-## License
-
+# License
 [Apache License 2.0](LICENSE.md)
 
 
