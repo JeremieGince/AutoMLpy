@@ -37,3 +37,6 @@ setup(
         "matplotlib>=3.3.3",
     ],
 )
+
+
+#  cmd: setup.py sdist bdist_wheel
