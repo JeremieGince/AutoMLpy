@@ -54,10 +54,6 @@ class HpOptimizer:
     Examples on how to use this class are in the folder "./examples".
 
     """
-    def __init__(self):
-        self.hp = {}
-        self.model = None
-
     def build_model(self, **hp) -> object:
         """
         Method used to build the model to optimize given a set of hyper-parameters.
@@ -496,6 +492,9 @@ class HpOptimizer:
         -------
         The output score of the trial.
         """
+        if n_splits >= 1:
+            return self._try_params_on_X_y_without_kfold(params, X, y)
+
         kf = KFold(n_splits=n_splits, shuffle=True)
 
         mean_score = 0.0
@@ -513,6 +512,33 @@ class HpOptimizer:
                 raise e
 
         return mean_score
+
+    def _try_params_on_X_y_without_kfold(
+            self,
+            params: dict,
+            X, y,
+    ) -> float:
+        """
+        Try a set of hyper-parameters on the model by using the methods implemented by the user.
+
+        Parameters
+        ----------
+        params: The trial hyper-parameters.
+        X: The training input data. (Union[np.ndarray, pd.DataFrame, torch.Tensor, tf.Tensor])
+        y: The training labels. (Union[np.ndarray, torch.Tensor, tf.Tensor])
+
+        Returns
+        -------
+        The output score of the trial.
+        """
+        try:
+            model = self.build_model(**params)
+            self.fit_model_(model, X, y, **params)
+            score = self.score(model, X, y, **params)
+        except Exception as e:
+            logging.error(str(e))
+            raise e
+        return score
 
     def _take_sub_X_y(
             self,

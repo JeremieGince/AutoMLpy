@@ -236,10 +236,10 @@ if __name__ == '__main__':
     iterations_results, time_results, memory_results = show_stats_per_dimension(
         max_workers=min(5, multiprocessing.cpu_count()//2),
         dim=1,
-        iterations_per_workers=2,
-        compute_delay=0.1,
+        iterations_per_workers=5,
+        compute_delay=0.05,
         stop_criterion=0.75,
-        algos=[SearchType.GPO, ],
+        algos=[SearchType.Random, SearchType.GPO, SearchType.Grid],
         dark_mode=False
     )
 
