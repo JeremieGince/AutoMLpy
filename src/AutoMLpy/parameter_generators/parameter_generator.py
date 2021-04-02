@@ -1,29 +1,19 @@
-
-import matplotlib.pyplot as plt
-import numpy as np
-import tqdm
-from typing import Dict, Union, List, Iterable, Hashable, Tuple, Callable
-import pandas as pd
-import multiprocessing
-from multiprocessing import Pool
-import time
-import os
-import logging
-import plotly.graph_objects as go
 import json
-import warnings
+import logging
+import os
+import time
+from typing import Dict, Union, List, Iterable, Hashable, Callable
 
 # ------- App Server -------- #
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import numpy as np
+import plotly.graph_objects as go
 from dash.dependencies import Input, Output
-import threading
-import plotly.io as pio
 
 
 class ParameterGenerator:
-
     class Decorators:
         @classmethod
         def increment_counters(cls, method):
@@ -134,7 +124,7 @@ class ParameterGenerator:
         -------
         The elapsed time of the last itr.
         """
-        return self.elapse_time_per_iteration[self.current_itr-1]
+        return self.elapse_time_per_iteration[self.current_itr - 1]
 
     def __len__(self) -> int:
         """
