@@ -1,6 +1,6 @@
 from tests.objective_functions.vectorized_objective_function import VectorizedObjectiveFuncHpOptimizer
 import numpy as np
-from src.AutoMLpy import SearchType, search_type_2_type
+from src.AutoMLpy.parameter_generators import SearchType, search_type_2_type
 
 
 def execute_optimisation(
@@ -50,7 +50,7 @@ def execute_optimisation(
 
     opt_hp = param_gen.get_best_param()
 
-    test_acc, _ = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp), **opt_hp)
+    test_acc = obj_func_hp_optimizer.score(obj_func_hp_optimizer.build_model(**opt_hp), **opt_hp)
 
     param_gen.write_optimization_to_html(show=kwargs.get("show", False), **save_kwargs)
     return param_gen
