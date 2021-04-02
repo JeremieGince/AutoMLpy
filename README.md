@@ -13,11 +13,15 @@ Everything is implemented to be compatible with the _Tensorflow_, _pyTorch_ and 
 
 # Installation
 
+## Latest stable version:
 ```
 pip install AutoMLpy
 ```
 
-And that's it!
+## Latest unstable version:
+0. Download the .whl file [here](https://github.com/JeremieGince/AutoMLpy/blob/main/dist/AutoMLpy-0.0.3-py3-none-any.whl);
+1. Copy the path of this file on your computer;
+2. pip install it with ``` pip install [path].whl ```
 
  
  ---------------------------------------------------------------------------
