@@ -1,5 +1,5 @@
 from setuptools import setup
-from version import __version__
+from src.AutoMLpy.version import __version__
 import setuptools
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -30,9 +30,10 @@ setup(
         "tqdm>=4.56.0",
         "numpy>=1.19.5",
         "scikit-learn>=0.24.1",
+        "scipy>=1.6.0",
         "plotly>=4.14.3",
         "pandas>=1.2.1",
         "dash>=1.19.0",
-        "matplotlib"
+        "matplotlib>=3.3.3",
     ],
 )

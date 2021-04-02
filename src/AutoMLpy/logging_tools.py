@@ -27,7 +27,7 @@ def logs_file_setup(file: str, level=logging.INFO):
 
 def log_device_setup(deepLib: DeepLib = DeepLib.Null):
     import sys
-    from version import __version__
+    from .version import __version__
 
     logging.info(f'__Python VERSION: {sys.version}')
     logging.info(f"AutoMLpy.version: {__version__}")

@@ -3,6 +3,7 @@ setup.py
 src/AutoMLpy/__init__.py
 src/AutoMLpy/logging_tools.py
 src/AutoMLpy/tools.py
+src/AutoMLpy/version.py
 src/AutoMLpy.egg-info/PKG-INFO
 src/AutoMLpy.egg-info/SOURCES.txt
 src/AutoMLpy.egg-info/dependency_links.txt
