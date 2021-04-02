@@ -32,5 +32,6 @@ setup(
         "scikit-learn>=0.24.1",
         "plotly>=4.14.3",
         "pandas>=1.2.1",
+        "dash>=1.19.0",
     ],
 )
