@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
 Name: AutoMLpy
 Version: 0.0.3
-Summary: This package is an automatic machine learning module whose function is to optimize the hyper-parameters of an automatic learning model.Code at: https://github.com/JeremieGince/AutoMLpy .
+Summary: This package is an automatic machine learning module whose function is to optimize the hyper-parameters of an automatic learning model. Code at: https://github.com/JeremieGince/AutoMLpy .
 Home-page: https://github.com/JeremieGince/AutoMLpy
 Author: Jérémie Gince
 Author-email: gincejeremie@gmail.com
@@ -237,7 +237,7 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
             model, mnist_train, **opt_hp
         )
         
-        test_acc, _ = mnist_hp_optimizer.score_on_dataset(
+        test_acc = mnist_hp_optimizer.score_on_dataset(
             model, mnist_test, **opt_hp
         )
         
@@ -269,80 +269,9 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
          There you can find the previous example with [_Tensorflow_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/tensorflow_example.ipynb) 
          and an example with [_pyTorch_](https://github.com/JeremieGince/AutoMLpy/blob/main/examples/pytorch_example.ipynb).
          
-         
-         
-         
-         ---------------------------------------------------------------------------
-         # Structure of the repository
-        ````
-        AutoMLpy/
-        |
-        |-- examples/
-        |   |-- pytorch_example.ipynb
-        |   |-- tensorflow_example.ipynb
-        |   |-- examples_requirements.txt
-        |
-        |-- src/
-        |   |-- AutoMLpy/
-        |   |   |-- optimizers/
-        |   |   |   |-- __init__.py
-        |   |   |   |-- optimizer.py
-        |
-        |   |   |-- parameter_generators/
-        |   |   |   |-- __init__.py
-        |   |   |   |-- gp_search.py
-        |   |   |   |-- grid_search.py
-        |   |   |   |-- parameter_generator.py
-        |   |   |   |-- random_search.py
-        |
-        |   |   |-- __init__.py
-        |   |   |-- logging_tools.py
-        |   |   |-- tools.py
-        |
-        |-- tests/
-        |   |-- comparisons/
-        |   |   |-- __init__.py
-        |   |   |-- comparison_itrAndTime_per_dim.py
-        |   |   |-- optimisation-time_per_nb_workers.py
-        |   |   |-- showing_acquisitions_per_algorithm.py
-        |
-        |   |-- objective_functions/
-        |   |   |-- __init__.py
-        |   |   |-- objective_function.py
-        |   |   |--  vectorized_objective_function.py
-        |
-        |   |-- pytorch_items/
-        |   |   |-- __init__.py
-        |   |   |-- pytorch_datasets.py
-        |   |   |-- pytorch_ho_optimizers.py
-        |   |   |-- pytorch_models.py
-        |   |   |-- pytorch_training.py
-        |
-        |   |-- tensorflow_items/
-        |   |   |-- __init__.py
-        |   |   |-- tf_datasets.py
-        |   |   |-- tf_ho_optimizers.py
-        |   |   |-- tf_models.py
-        |
-        |   |-- __init__.py
-        |   |-- gp_optimizer_test.py
-        |   |-- grid_optimizer_test.py
-        |   |-- random_optimizer_test.py
-        |   |-- random_search_test.py
-        |   |-- tests_requirements.txt
-        |
-        |-- __init__.py
-        |-- __main__.py
-        |-- LISCENSE.mn
-        |-- README.md
-        |-- setup.py
-        |-- version.py
-        |-- requirements.txt
         
-        ````
         
-        ## License
-        
+        # License
         [Apache License 2.0](LICENSE.md)
         
         
