@@ -225,6 +225,9 @@ class HpOptimizer:
 
         if verbose:
             progress.close()
+
+        param_gen.save_obj(**save_kwargs)
+        param_gen.save_history(**save_kwargs)
         param_gen.save_best_param(**save_kwargs)
         param_gen.write_optimization_to_html(show=False, **save_kwargs)
         return param_gen
@@ -361,6 +364,9 @@ class HpOptimizer:
 
         if verbose:
             progress.close()
+
+        param_gen.save_obj(**save_kwargs)
+        param_gen.save_history(**save_kwargs)
         param_gen.save_best_param(**save_kwargs)
         param_gen.write_optimization_to_html(show=False, **save_kwargs)
         return param_gen
