@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
     save_kwargs = dict(
         save_name=f"tf_mnist_hp_opt",
-        title="Random search: MNIST",
+        title="Grid search: MNIST",
     )
 
     param_gen = mnist_hp_optimizer.optimize_on_dataset(
