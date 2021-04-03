@@ -2,6 +2,8 @@ import json
 import logging
 import os
 import time
+import pandas as pd
+import pickle
 from typing import Dict, Union, List, Iterable, Hashable, Callable
 
 # ------- App Server -------- #
@@ -99,7 +101,7 @@ class ParameterGenerator:
 
     def reset(self) -> None:
         """
-        Reset the current parameter generator.
+        Reset the current the parameter generator.
         """
         self.start_time = time.time()
         self.current_itr = 0
@@ -586,6 +588,28 @@ class ParameterGenerator:
             logging.info(f"Saving html fig to {path}")
             fig.write_html(path)
 
+    def get_optimization_table(self, **kwargs) -> pd.DataFrame:
+        """
+        Get the optimization table. each row is a trial on hp with it's associated score.
+
+        Parameters
+        ----------
+        kwargs:
+            None
+
+        Returns
+        -------
+        The optimization table.
+        """
+        data = {"score": [], **{p: [] for p in self._values_names}}
+
+        for i, (p_trial, p_score) in enumerate(self.history):
+            for p_name in self._values_names:
+                data[p_name].append(p_trial.get(p_name, None))
+            data["score"].append(p_score)
+
+        return pd.DataFrame(data=data)
+
     def save_best_param(self, **kwargs):
         """
         Save the best hyper-parameters found in a json file.
@@ -609,9 +633,67 @@ class ParameterGenerator:
         with open(f'{save_dir}/{save_name}.json', 'w') as f:
             json.dump(self.get_best_param(), f, indent=4)
 
-    def save_obj(self):
-        raise NotImplementedError()
+    def save_history(self, **kwargs):
+        """
+        Save the trials history in a json file.
+
+        Parameters
+        ----------
+        kwargs:
+            save_dir: The saving directory. (str)
+            save_name: The saving name. (str)
+
+        Returns
+        -------
+        None
+        """
+        save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/history/")
+        save_name = kwargs.get("save_name", f"{self.default_save_name}-history")
+        os.makedirs(save_dir, exist_ok=True)
+
+        with open(f'{save_dir}/{save_name}.json', 'w') as f:
+            json.dump(self.history, f, indent=4)
+
+    def save_obj(self, **kwargs) -> str:
+        """
+        Save the ParameterGenerator object in a pickle file.
+
+        Parameters
+        ----------
+        kwargs:
+            save_dir: The saving directory. (str)
+            save_name: The saving name. (str)
+
+        Returns
+        -------
+        The saving path.
+        """
+        save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/obj/")
+        save_name = kwargs.get("save_name", f"{self.default_save_name}-obj")
+        os.makedirs(save_dir, exist_ok=True)
+
+        path = f'{save_dir}/{save_name}.pkl'
+        with open(path, 'wb') as f:
+            pickle.dump(self, f)
+
+        return path
 
     @staticmethod
-    def load_obj(path: str):
-        raise NotImplementedError()
+    def load_obj(path: str, **kwargs) -> object:
+        """
+        Load the ParameterGenerator and reset the start time.
+
+        Parameters
+        ----------
+        path: path to the object (returned value of ParameterGenerator.save_obj).
+        kwargs:
+            None
+
+        Returns
+        -------
+        The ParameterGenerator object.
+        """
+        with open(path, 'rb') as f:
+            obj = pickle.load(f)
+        obj.start_time = time.time()
+        return obj
