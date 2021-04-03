@@ -186,6 +186,7 @@ class HpOptimizer:
         verbose: True to print some stats else False.
         kwargs:
             stop_criterion: If the score once reach this criterion the optimization will stop. (float)
+            reset_gen: True to reset the parameter generator before the optimization else False. (bool) Default: True.
 
         Return
         ---------
@@ -200,18 +201,18 @@ class HpOptimizer:
         stop_criterion = kwargs.get("stop_criterion", None)
         stop_criterion_trigger = False
 
-        param_gen.reset()
-        max_itr = len(param_gen)
+        if kwargs.get("reset_gen", True):
+            param_gen.reset()
 
         if verbose:
-            progress = tqdm.tqdm(range(max_itr), unit='itr', postfix="optimisation")
+            progress = tqdm.tqdm(range(param_gen.max_itr), unit='itr', postfix="optimisation")
         else:
-            progress = range(max_itr)
+            progress = range(param_gen.max_itr)
         for i in progress:
             if not bool(param_gen) or stop_criterion_trigger:
                 break
             try:
-                workers_required = min(nb_workers, max_itr - i)
+                workers_required = min(nb_workers, param_gen.max_itr - i)
                 outputs = self._process_trial_on_X_y(param_gen, X, y, n_splits, workers_required)
 
                 stop_criterion_trigger = self._post_process_trial_(
@@ -321,6 +322,7 @@ class HpOptimizer:
         verbose: True to print some stats else False.
         kwargs:
             stop_criterion: If the score once reach this criterion the optimization will stop. (float)
+            reset_gen: True to reset the parameter generator before the optimization else False. (bool) Default: True.
 
         Return
         ---------
@@ -335,18 +337,18 @@ class HpOptimizer:
         stop_criterion = kwargs.get("stop_criterion", None)
         stop_criterion_trigger = False
 
-        param_gen.reset()
-        max_itr = len(param_gen)
+        if kwargs.get("reset_gen", True):
+            param_gen.reset()
 
         if verbose:
-            progress = tqdm.tqdm(range(max_itr), unit='itr', postfix="optimisation")
+            progress = tqdm.tqdm(range(param_gen.max_itr), unit='itr', postfix="optimisation")
         else:
-            progress = range(max_itr)
+            progress = range(param_gen.max_itr)
         for i in progress:
             if not bool(param_gen) or stop_criterion_trigger:
                 break
             try:
-                workers_required = min(nb_workers, max_itr - i)
+                workers_required = min(nb_workers, param_gen.max_itr - i)
                 outputs = self._process_trial_on_dataset(param_gen, dataset, workers_required)
 
                 stop_criterion_trigger = self._post_process_trial_(
