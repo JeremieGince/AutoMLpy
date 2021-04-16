@@ -89,8 +89,9 @@ class ParameterGenerator:
         self.app_thread = None
 
         # ------- Saving -------- #
+        # TODO: need to normalize string
         self.default_save_dir = kwargs.get("save_dir", f"parameter_generators_data/{self.__class__.__name__}/")
-        self.default_save_name = kwargs.get("save_name", '-'.join(self._values_names))
+        self.default_save_name = kwargs.get("save_name", '-'.join(self._values_names).replace(' ', '_'))
 
     def __del__(self):
         self.close_graph_server()
