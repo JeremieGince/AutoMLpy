@@ -258,6 +258,11 @@ You can visualize the optimization with an interactive html file.
 ```python
 fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, **save_kwargs)
 ```
+
+## Optimisation table
+```python
+opt_table = param_gen.get_optimization_table()
+```
  
  ---------------------------------------------------------------------------
  # Other examples
