@@ -266,6 +266,40 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
         ```python
         fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, **save_kwargs)
         ```
+        
+        ## Optimisation table
+        ```python
+        opt_table = param_gen.get_optimization_table()
+        ```
+        
+        ## Saving ParameterGenerator
+        ```python
+        param_gen.save_history(**save_kwargs)
+        save_path = param_gen.save_obj(**save_kwargs)
+        ```
+        
+        ## Loading ParameterGenerator
+        ```python
+        param_gen = RandomHpSearch.load_obj(save_path)
+        ```
+        
+        ## Re-lunch optimisation with loaded ParameterGenerator
+        ```python
+        # Change the budget to be able to optimize again
+        param_gen.max_itr = param_gen.max_seconds + 100
+        param_gen.max_seconds = param_gen.max_seconds + 60
+        
+        param_gen = mnist_hp_optimizer.optimize_on_dataset(
+            param_gen, mnist_train, save_kwargs=save_kwargs,
+            stop_criterion=1.0, reset_gen=False,
+        )
+        
+        opt_hp = param_gen.get_best_param()
+        
+        print(param_gen.get_optimization_table())
+        pp.pprint(param_gen.history)
+        pp.pprint(opt_hp)
+        ```
          
          ---------------------------------------------------------------------------
          # Other examples
