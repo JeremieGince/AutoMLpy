@@ -234,12 +234,12 @@ if __name__ == '__main__':
     log_device_setup()
 
     iterations_results, time_results, memory_results = show_stats_per_dimension(
-        max_workers=min(5, multiprocessing.cpu_count()//2),
+        max_workers=min(3, multiprocessing.cpu_count()//2),
         dim=1,
-        iterations_per_workers=10,
+        iterations_per_workers=2,
         compute_delay=0.05,
         stop_criterion=0.75,
-        algos=[SearchType.Random, SearchType.GPO, ],
+        algos=[SearchType.Grid, ],
         dark_mode=False
     )
 
