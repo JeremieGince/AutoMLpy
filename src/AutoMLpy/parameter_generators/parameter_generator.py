@@ -4,7 +4,7 @@ import os
 import time
 import pandas as pd
 import pickle
-from typing import Dict, Union, List, Iterable, Hashable, Callable
+from typing import Dict, Union, List, Iterable, Hashable, Callable, Sequence
 
 # ------- App Server -------- #
 import dash
@@ -32,7 +32,7 @@ class ParameterGenerator:
             return wrapper
 
     def __init__(self,
-                 values_dict: Dict[Union[int, str], Iterable[Union[int, float]]],
+                 values_dict: Dict[Union[int, str], Sequence[Union[int, float]]],
                  **kwargs):
         """
         Used to generate the hyper-parameter (hp) score_space, generate trial parameter for the exploration and get the best
@@ -68,11 +68,7 @@ class ParameterGenerator:
         self._values_names = list(values_dict.keys())
         self._values_dict = values_dict
 
-        for p in self._values_names:
-            self._param_name_to_type[p] = type(self._values_dict[p][0])
-            if self.check_str_in_iterable(values_dict[p]):
-                self.add_conversion_tables_param_name_to_idx(p, values_dict[p])
-                values_dict[p] = self.convert_param_to_idx(p, values_dict[p])
+        self.make_param_name_to_types(values_dict)
 
         # ------- Hp score_space -------- #
         self.xx = np.meshgrid(*[values_dict[p] for p in self._values_names])
@@ -98,7 +94,19 @@ class ParameterGenerator:
         self.default_save_name = kwargs.get("save_name", '-'.join(self._values_names).replace(' ', '_'))
 
     def __del__(self):
-        self.close_graph_server()
+        try:
+            self.close_graph_server()
+        except AttributeError:
+            pass
+
+    def make_param_name_to_types(self, values_dict):
+        for p in self._values_names:
+            self._param_name_to_type[p] = type(self._values_dict[p][0])
+            assert self.check_homogenous_type_in_iterable(self._values_dict[p]),\
+                "All objects in the same dimension must be the same type."
+            if self.check_str_in_iterable(values_dict[p]):
+                self.add_conversion_tables_param_name_to_idx(p, values_dict[p])
+                values_dict[p] = self.convert_param_to_idx(p, values_dict[p])
 
     @property
     def bounds_names(self) -> List[str]:
@@ -271,6 +279,23 @@ class ParameterGenerator:
         True if the iterable contain a str in it.
         """
         return any([isinstance(e, str) for e in iterable])
+
+    @staticmethod
+    def check_homogenous_type_in_iterable(iterable: Sequence) -> bool:
+        """
+        Check if all object in iterable are the same type.
+        Parameters
+        ----------
+        iterable : the iterable object.
+
+        Returns
+        ----------
+        True if all object are the same type else False.
+        """
+        if len(iterable) == 0:
+            return True
+        type0 = type(iterable[0])
+        return all([isinstance(e, type0) for e in iterable])
 
     def show_expectation(self, **kwargs) -> None:
         """
