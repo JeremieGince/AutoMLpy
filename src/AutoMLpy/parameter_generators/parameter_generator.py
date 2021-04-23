@@ -16,6 +16,10 @@ from dash.dependencies import Input, Output
 
 
 class ParameterGenerator:
+    DEFAULT_MARKER_SIZE = 10
+    DEFAULT_MARKER_COLORSCALE = "Viridis"
+    DEFAULT_FONT_SIZE = 18
+
     class Decorators:
         @classmethod
         def increment_counters(cls, method):
@@ -396,6 +400,10 @@ class ParameterGenerator:
         kwargs:
             title: The title of the figure. (str)
             dark_mode: True to use the dark mode else False. (bool)
+            marker_size: The size of the marker showed in the plot. (float)
+            colorscale: Color scale of the markers. The colorscales from plotly can be found at
+                        https://plotly.com/python/builtin-colorscales/. (str)
+            font_size: Font size of the plot. (int)
 
         Returns
         -------
@@ -408,8 +416,10 @@ class ParameterGenerator:
                        y=x_y_dict[self._values_names[0]]['y'],
                        mode='markers',
                        name="Trial points",
-                       marker=dict(size=5, color=x_y_dict[self._values_names[0]]['y'],
-                                   colorscale='Viridis', showscale=True),
+                       marker=dict(size=kwargs.get("marker_size", ParameterGenerator.DEFAULT_MARKER_SIZE),
+                                   color=x_y_dict[self._values_names[0]]['y'],
+                                   colorscale=kwargs.get("colorscale", ParameterGenerator.DEFAULT_MARKER_COLORSCALE),
+                                   showscale=True),
                        ),
         )
 
@@ -424,7 +434,7 @@ class ParameterGenerator:
             margin=dict(t=150, b=150, l=150, r=150),
             template="plotly_dark" if kwargs.get("dark_mode", True) else "seaborn",
             font=dict(
-                size=18,
+                size=kwargs.get("font_size", ParameterGenerator.DEFAULT_FONT_SIZE),
             )
         )
 
@@ -457,6 +467,9 @@ class ParameterGenerator:
         -------
         None
         """
+        colorscale = kwargs.get("colorscale", ParameterGenerator.DEFAULT_MARKER_COLORSCALE)
+        marker_size = kwargs.get("marker_size", ParameterGenerator.DEFAULT_MARKER_SIZE)
+
         # Add dropdown
         fig.update_layout(
             updatemenus=[
@@ -467,7 +480,10 @@ class ParameterGenerator:
                                 dict(
                                     x=[x_y_dict[p_name]['x']],
                                     y=[x_y_dict[p_name]['y']],
-                                    marker=dict(color=x_y_dict[p_name]['y'], showscale=True),
+                                    marker=dict(size=marker_size,
+                                                color=x_y_dict[p_name]['y'],
+                                                colorscale=colorscale,
+                                                showscale=True),
                                 ),
                                 {
                                     # "title": f"{p_name}",
@@ -540,6 +556,10 @@ class ParameterGenerator:
             show: True to show the figure else False. (bool)
             title: The title of the figure. (str)
             dark_mode: True to use the dark mode else False. (bool)
+            marker_size: The size of the marker showed in the plot. (float)
+            colorscale: Color scale of the markers. The colorscales from plotly can be found at
+                        https://plotly.com/python/builtin-colorscales/. (str)
+            font_size: Font size of the plot. (int)
             add_best_hp_annotation: True to activate the "Predicted best hyper-parameters:" label.
             get_best_param_kwargs: The kwargs of the method get_best_params_repr.
             save: True to save the figure else False. (bool)
@@ -556,7 +576,7 @@ class ParameterGenerator:
         self._add_dropdown_html_fig_(fig, x_y_dict, **kwargs)
         self._add_annotations_to_html_fig_(fig, x_y_dict, **kwargs)
 
-        self.save_html_fig(fig, **kwargs)
+        saved_path = self.save_html_fig(fig, **kwargs)
         if kwargs.get("show", True):
             fig.show()
 
@@ -566,7 +586,7 @@ class ParameterGenerator:
             self,
             fig: go.Figure,
             **kwargs
-    ):
+    ) -> str:
         """
 
         Parameters
@@ -579,7 +599,7 @@ class ParameterGenerator:
 
         Returns
         -------
-        None
+        The path to the saved figure.
         """
         save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/html_files/")
         os.makedirs(save_dir, exist_ok=True)
@@ -588,6 +608,7 @@ class ParameterGenerator:
         if kwargs.get("save", True):
             logging.info(f"Saving html fig to {path}")
             fig.write_html(path)
+        return path
 
     def get_optimization_table(self, **kwargs) -> pd.DataFrame:
         """
@@ -611,7 +632,7 @@ class ParameterGenerator:
 
         return pd.DataFrame(data=data)
 
-    def save_best_param(self, **kwargs):
+    def save_best_param(self, **kwargs) -> str:
         """
         Save the best hyper-parameters found in a json file.
 
@@ -623,18 +644,20 @@ class ParameterGenerator:
 
         Returns
         -------
-        None
+        The path to the saved file.
         """
         save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/optimal_hp/")
         save_name = kwargs.get("save_name", f"{self.default_save_name}-opt_hp")
+        save_path = f'{save_dir}/{save_name}.json'
         os.makedirs(save_dir, exist_ok=True)
         # save_path = save_dir + '/' + save_name
         # np.save(save_path + ".npy", self.get_best_param(), allow_pickle=True)
 
-        with open(f'{save_dir}/{save_name}.json', 'w') as f:
+        with open(save_path, 'w') as f:
             json.dump(self.get_best_param(), f, indent=4)
+        return save_path
 
-    def save_history(self, **kwargs):
+    def save_history(self, **kwargs) -> str:
         """
         Save the trials history in a json file.
 
@@ -646,14 +669,16 @@ class ParameterGenerator:
 
         Returns
         -------
-        None
+        The path to the saved file.
         """
         save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/history/")
         save_name = kwargs.get("save_name", f"{self.default_save_name}-history")
+        save_path = f'{save_dir}/{save_name}.json'
         os.makedirs(save_dir, exist_ok=True)
 
-        with open(f'{save_dir}/{save_name}.json', 'w') as f:
+        with open(save_path, 'w') as f:
             json.dump(self.history, f, indent=4)
+        return save_path
 
     def save_obj(self, **kwargs) -> str:
         """
@@ -680,7 +705,7 @@ class ParameterGenerator:
         return path
 
     @staticmethod
-    def load_obj(path: str, **kwargs) -> object:
+    def load_obj(path: str, **kwargs) -> 'ParameterGenerator':
         """
         Load the ParameterGenerator and reset the start time.
 
@@ -696,5 +721,9 @@ class ParameterGenerator:
         """
         with open(path, 'rb') as f:
             obj = pickle.load(f)
+
+        if not isinstance(obj, ParameterGenerator):
+            raise TypeError(f"The object at {path} is not a ParameterGenerator")
+
         obj.start_time = time.time()
         return obj
