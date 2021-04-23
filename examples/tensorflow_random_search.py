@@ -124,7 +124,7 @@ if __name__ == '__main__':
         use_conv=[True, False],
     )
 
-    param_gen = RandomHpSearch(hp_space, max_seconds=60, max_itr=100)
+    param_gen = RandomHpSearch(hp_space, max_seconds=2*60, max_itr=100)
 
     save_kwargs = dict(
         save_name=f"tf_mnist_hp_opt",
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(opt_hp)
 
-    fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, **save_kwargs)
+    fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, marker_size=10, **save_kwargs)
     print(param_gen.get_optimization_table())
     pp.pprint(param_gen.history)
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     print('-' * 50, "re-optimize", '-' * 50)
 
     # Change the budget to be able to optimize again
-    param_gen.max_itr = param_gen.max_seconds + 100
+    param_gen.max_itr = param_gen.max_itr + 100
     param_gen.max_seconds = param_gen.max_seconds + 60
 
     param_gen = mnist_hp_optimizer.optimize_on_dataset(
@@ -175,6 +175,7 @@ if __name__ == '__main__':
     )
 
     opt_hp = param_gen.get_best_param()
+    fig_from_re_opt = param_gen.write_optimization_to_html(show=True, dark_mode=True, marker_size=10, **save_kwargs)
     print(param_gen.get_optimization_table())
     pp.pprint(param_gen.history)
     pp.pprint(opt_hp)
