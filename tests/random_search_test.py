@@ -23,6 +23,34 @@ class TestRandomHpSearch(unittest.TestCase):
                         f"rnGen.elapse_time_per_iteration[rnGen.current_itr]: "
                         f"{rnGen.elapse_time_per_iteration[rnGen.current_itr-1]}")
 
+    def test_dimension_types(self):
+        try:
+            rnGen = RandomHpSearch(
+                {"x0": range(0, 10),
+                 "x1": [0, 1.1, 0.0]},
+                max_itr=1
+            )
+        except AssertionError as e:
+            self.assertTrue(isinstance(e, AssertionError))
+
+        try:
+            rnGen = RandomHpSearch(
+                {"x0": range(0, 10),
+                 "x1": [0, "1.1", 0.0]},
+                max_itr=1
+            )
+        except AssertionError as e:
+            self.assertTrue(isinstance(e, AssertionError))
+
+        try:
+            rnGen = RandomHpSearch(
+                {"x0": range(0, 10),
+                 "x1": [0, 0, 0]},
+                max_itr=1
+            )
+        except AssertionError as e:
+            self.assertFalse(isinstance(e, AssertionError))
+
 
 if __name__ == '__main__':
     unittest.main()
