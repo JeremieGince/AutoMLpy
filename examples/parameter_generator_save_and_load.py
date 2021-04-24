@@ -150,12 +150,12 @@ if __name__ == '__main__':
     print(param_gen.get_optimization_table())
     pp.pprint(param_gen.history)
 
-    param_gen.save_history(**save_kwargs)
-    save_path = param_gen.save_obj(**save_kwargs)
-
     # --------------------------------------------------------------------------------- #
     #                                   Save/Load                                       #
     # --------------------------------------------------------------------------------- #
+    param_gen.save_history(**save_kwargs)
+    save_path = param_gen.save_obj(**save_kwargs)
+
     print('-'*50, "delete Param Gen and reload", '-'*50)
 
     del param_gen
