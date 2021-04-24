@@ -1,5 +1,6 @@
 import os
 from typing import Dict, Union, List, Iterable, Tuple
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -143,6 +144,7 @@ class GPOHpSearch(ParameterGenerator):
                                     figure will be saved as png.
         }
         """
+        warnings.warn("Deprecated --> must not work as it should be. Will be removed in the future", DeprecationWarning)
         bounds_to_plot = []
         for i, param_name in enumerate(self._values_names):
             if len(self._values_dict[param_name]) > 1:
@@ -194,6 +196,7 @@ class GPOHpSearch(ParameterGenerator):
                                     figure will be saved as png.
         }
         """
+        warnings.warn("Deprecated --> must not work as it should be. Will be removed in the future", DeprecationWarning)
         assert param_name in self._values_names
         _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y) = self._compute_expectation_of_param(param_name)
         x_dim = np.unique(raw_x_dim)
@@ -234,6 +237,7 @@ class GPOHpSearch(ParameterGenerator):
         ---------
         _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y)
         """
+        warnings.warn("Deprecated --> must not work as it should be. Will be removed in the future", DeprecationWarning)
         dim = self._values_names.index(param_name)
         _x = np.unique(self.xx[:, dim])
         f_hat, std_hat = self.gpr.predict(self.xx, return_std=True)
