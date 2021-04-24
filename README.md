@@ -304,4 +304,15 @@ pp.pprint(opt_hp)
 # License
 [Apache License 2.0](LICENSE.md)
 
+# Citation
+```
+@article{Gince,
+  title={Implémantation du module AutoMLpy, un outil d’apprentissage machine automatique},
+  author={Jérémie Gince},
+  year={2021},
+  publisher={ULaval},
+  url={https://github.com/JeremieGince/AutoMLpy},
+}
+```
+
 
