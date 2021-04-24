@@ -145,6 +145,7 @@ if __name__ == '__main__':
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(opt_hp)
 
+    param_gen.show_optimization("learning_rate")
     fig = param_gen.write_optimization_to_html(show=True, dark_mode=True, marker_size=10, **save_kwargs)
     print(param_gen.get_optimization_table())
     pp.pprint(param_gen.history)
