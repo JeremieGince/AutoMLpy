@@ -1,17 +1,26 @@
-import json
+# ------- Base import -------- #
 import logging
 import os
 import time
+from typing import Dict, Union, List, Iterable, Hashable, Callable, Sequence, Optional
+
+# ------- Math -------- #
+import numpy as np
 import pandas as pd
+
+# ------- Saving -------- #
 import pickle
-from typing import Dict, Union, List, Iterable, Hashable, Callable, Sequence
+import json
+
+# ------- Plotting -------- #
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+
 
 # ------- App Server -------- #
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import numpy as np
-import plotly.graph_objects as go
 from dash.dependencies import Input, Output
 
 
@@ -109,7 +118,7 @@ class ParameterGenerator:
                 values_dict[p] = self.convert_param_to_idx(p, values_dict[p])
 
     @property
-    def bounds_names(self) -> List[str]:
+    def hp_names(self) -> List[str]:
         return self._values_names
 
     def reset(self) -> None:
@@ -656,6 +665,73 @@ class ParameterGenerator:
             data["score"].append(p_score)
 
         return pd.DataFrame(data=data)
+
+    def show_optimization(self, _parameter_name: Optional[str] = None, **kwargs):
+        if _parameter_name is None:
+            self._show_full_optimization(**kwargs)
+        else:
+            _fontsize = kwargs.get("fontsize", ParameterGenerator.DEFAULT_FONT_SIZE)
+            _title = kwargs.get('title', '')
+            _save_name = kwargs.get('save_name', f'{_parameter_name}_optimization')
+            _show = kwargs.get("show", True)
+            fig, subfig = plt.subplots(1, 1, tight_layout=True)
+            subfig = self._show_optimization_of_hp(_parameter_name, subfig, **kwargs)
+            plt.legend(fontsize=_fontsize)
+            fig_dir = kwargs.get('fig_dir', 'figures/')
+            os.makedirs(f"{fig_dir}", exist_ok=True)
+            plt.savefig(f"{fig_dir}/{_save_name}.png", dpi=300)
+            if _show:
+                plt.show()
+
+    def _show_optimization_of_hp(self, _parameter_name: str, _axe: plt.Axes, **kwargs):
+        _optimization_table = self.get_optimization_table(**kwargs)
+        # get args
+        _fontsize = kwargs.get("fontsize", ParameterGenerator.DEFAULT_FONT_SIZE)
+        _title = kwargs.get('title', '')
+
+        # plot sub fig
+        _x = _optimization_table[_parameter_name].to_numpy()
+        _scores = _optimization_table["score"].to_numpy()
+        _axe.plot(_x, _scores, marker='.', label=f"{_parameter_name}")
+        # _axe.fill_between(_x, mean_dim_f_hat, mean_dim_f_hat + mean_dim_std_hat, alpha=0.4)
+        # _axe.fill_between(_x, mean_dim_f_hat, mean_dim_f_hat - mean_dim_std_hat, alpha=0.4)
+
+        if _parameter_name in self._param_idx_to_name:
+            _axe.set_xticks(list(range(len(_x))))
+            _axe.set_xticklabels(self.convert_idx_to_param(_parameter_name, _x))
+        _axe.set_xlabel("hp space [-]", fontsize=_fontsize)
+        _axe.set_ylabel("Score [-]", fontsize=_fontsize)
+        _axe.set_title(f"{_parameter_name}", fontsize=_fontsize)
+        return _axe
+
+    def _show_full_optimization(self, **kwargs):
+        # get args
+        _fontsize = kwargs.get("fontsize", ParameterGenerator.DEFAULT_FONT_SIZE)
+        _title = kwargs.get('title', '')
+        _save_name = kwargs.get('save_name', 'full_optimization')
+        _show = kwargs.get("show", True)
+
+        # iterate on parameters
+        k = int(np.ceil(np.sqrt(len(self._values_names))))
+        j = 0
+        fig, subfigs = plt.subplots(k, k, tight_layout=True)
+        subfigs_list = subfigs.reshape(-1)
+        fig.suptitle(_title, fontsize=_fontsize)
+        for i, param_name in enumerate(self._values_names):
+            subfig = subfigs_list[i]
+            subfig = self._show_optimization_of_hp(param_name, subfig, **kwargs)
+            j = i
+
+        for i in range(j + 1, len(subfigs_list)):
+            subfig = subfigs_list[i]
+            subfig.set_axis_off()
+
+        plt.legend(fontsize=_fontsize)
+        fig_dir = kwargs.get('fig_dir', 'figures/')
+        os.makedirs(f"{fig_dir}", exist_ok=True)
+        plt.savefig(f"{fig_dir}/{_save_name}.png", dpi=300)
+        if _show:
+            plt.show()
 
     def save_best_param(self, **kwargs) -> str:
         """
