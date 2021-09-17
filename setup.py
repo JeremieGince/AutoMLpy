@@ -35,8 +35,15 @@ setup(
         "pandas>=1.2.1",
         "dash>=1.19.0",
         "matplotlib>=3.3.3",
+        "psutil>=5.8.0",
     ],
 )
 
 
-#  cmd: setup.py sdist bdist_wheel
+# build library
+#  setup.py sdist bdist_wheel
+
+# publish on PyPI
+#   twine check dist/*
+#   twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+#   twine upload dist/*

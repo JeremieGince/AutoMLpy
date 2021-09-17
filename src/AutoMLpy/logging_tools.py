@@ -9,7 +9,7 @@ class DeepLib(enum.Enum):
     SkLearn = 2
 
 
-def logs_file_setup(file: str, level=logging.INFO):
+def logs_file_setup(file: str, level=logging.INFO, root_logs_dir: str = "./"):
     import os
     import sys
     import time
@@ -17,20 +17,25 @@ def logs_file_setup(file: str, level=logging.INFO):
 
     today = date.today()
     timestamp = str(time.time()).replace('.', '')
-    logs_dir = f"logs/logs-{today.strftime('%d-%m-%Y')}"
+    logs_dir = f"{root_logs_dir}/logs/logs-{today.strftime('%d-%m-%Y')}"
     logs_file = f'{logs_dir}/{os.path.splitext(os.path.basename(file))[0]}-{timestamp}.log'
     os.makedirs(logs_dir, exist_ok=True)
     logging.basicConfig(filename=logs_file, filemode='w+', level=level)
     sh = logging.StreamHandler(sys.stdout)
     logging.getLogger().addHandler(sh)
+    logging.info(f"Logs file at: {logs_file}\n")
 
 
 def log_device_setup(deepLib: DeepLib = DeepLib.Null):
     import sys
     from .version import __version__
+    import psutil
+    import multiprocessing
 
     logging.info(f'__Python VERSION: {sys.version}')
     logging.info(f"AutoMLpy.version: {__version__}")
+    logging.info(f"Number of available cores: {psutil.cpu_count(logical=False)}.")
+    logging.info(f"Number of available logical processors: {multiprocessing.cpu_count()}.")
 
     setup_func = {
         DeepLib.Null: lambda: None,
@@ -66,9 +71,24 @@ def log_pytorch_device_setup():
 
 
 def log_tensorflow_device_setup():
-    raise NotImplementedError()
+    import tensorflow as tf
+    from subprocess import check_output
+    logging.info(f'__tensorflow VERSION:{tf.__version__}')
+    try:
+        logging.info(f'__CUDA VERSION:\n{check_output(["nvcc", "--version"]).decode("utf-8")}')
+    except FileNotFoundError:
+        logging.info('__CUDA VERSION:Not Found')
+    try:
+        logging.info(f'__nvidia-smi:\n{check_output(["nvidia - smi", ]).decode("utf-8")}')
+    except FileNotFoundError:
+        logging.info('__nvidia-smi: Not Found')
+    physical_devices = tf.config.list_physical_devices('GPU')
+    logging.info(f"physical_devices: {physical_devices}")
+    logical_devices = tf.config.list_logical_devices('GPU')
+    logging.info(f"logical_devices: {logical_devices}")
 
 
 def log_sklearn_device_setup():
-    raise NotImplementedError()
+    import sklearn
+    logging.info(f'__sklearn VERSION:{sklearn.__version__}')
 

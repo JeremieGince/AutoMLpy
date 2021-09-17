@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: AutoMLpy
-Version: 0.0.3
+Version: 0.0.31
 Summary: This package is an automatic machine learning module whose function is to optimize the hyper-parameters of an automatic learning model. Code at: https://github.com/JeremieGince/AutoMLpy .
 Home-page: https://github.com/JeremieGince/AutoMLpy
 Author: Jérémie Gince
@@ -312,7 +312,16 @@ Description: <!--- # <p align="center"> AutoMLpy </p>) -->
         # License
         [Apache License 2.0](LICENSE.md)
         
-        
+        # Citation
+        ```
+        @article{Gince,
+          title={Implémentation du module AutoMLpy, un outil d’apprentissage machine automatique},
+          author={Jérémie Gince},
+          year={2021},
+          publisher={ULaval},
+          url={https://github.com/JeremieGince/AutoMLpy},
+        }
+        ```
         
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
