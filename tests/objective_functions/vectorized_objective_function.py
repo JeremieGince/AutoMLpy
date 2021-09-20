@@ -93,99 +93,105 @@ if __name__ == '__main__':
 
     # ----------------- Initialization -------------------- #
     obj_func_hp_optimizer = VectorizedObjectiveFuncHpOptimizer()
-    obj_func_hp_optimizer.set_dim(2)
+    obj_func_hp_optimizer.nb_points = 1_000
+    obj_func_hp_optimizer.set_dim(1)
     func = obj_func_hp_optimizer.build_model()
     print(f"Maximum of objective function: {obj_func_hp_optimizer.max:.3f}")
-    Z = obj_func_hp_optimizer.score(
-        func,
-        **{f"x{i}": obj_func_hp_optimizer.meshgrid[i] for i in range(obj_func_hp_optimizer.dim)}
-    )
-
-    # print(f"Z.shape: {Z.shape}")
-    # print(f"Z[0, 1].shape: {Z[:, :, 0].shape}")
-
-    # ----------------- Figure -------------------- #
-    fig = go.Figure()
-
-    fig.add_trace(
-        go.Surface(
-            x=obj_func_hp_optimizer.hp_space["x0"],
-            y=obj_func_hp_optimizer.hp_space["x1"],
-            z=Z[:, :, ],
-        )
-    )
-    fig.update_traces(contours_z=dict(show=True, usecolormap=True,
-                                      highlightcolor="limegreen", project_z=True))
-    fig.update_layout(
-        title=f'{obj_func_hp_optimizer.dim}D vectorized objective function',
-        autosize=True,
-        margin=dict(t=150, b=150, l=150, r=150),
-        template="seaborn",
-    )
-    fig.update_xaxes(title=f"x0: parameter space [-]")
-    fig.update_yaxes(title=f"x1: parameter space [-]")
-    # fig.update_zaxes(title="Score [-]")
-
-    # Add dropdown
-    fig.update_layout(
-        updatemenus=[
-            dict(
-                buttons=list([
-                    dict(
-                        args=[
-                            dict(
-                                x=[obj_func_hp_optimizer.hp_space[xi]],
-                                y=[obj_func_hp_optimizer.hp_space[xj]],
-                                z=Z,
-                            ),
-                            {
-                                # "title": f"{xi}-{xj}",
-                                "xaxis.title.text": f"{xi}: parameter space [-]",
-                                "yaxis.title.text": f"{xj}: parameter space [-]",
-                                "zaxis.title.text": "Score [-]",
-                            }
-                        ],
-                        label=f"{xi}-{xj}",
-                        method="update",
-                    )
-                    for xi in obj_func_hp_optimizer.hp_space for xj in obj_func_hp_optimizer.hp_space if xi != xj
-                ]),
-                direction="down",
-                pad={"r": 10, "t": 10},
-                showactive=True,
-                x=0.9,
-                xanchor="left",
-                y=1.1,
-                yanchor="middle"
-            ),
-        ]
-    )
-
-    save_dir = f"figures/vectorized_objective_function/"
-    os.makedirs(save_dir, exist_ok=True)
-    fig.write_html(f"{save_dir}/{'-'.join([f'{k}_{v}' for k, v in obj_func_hp_optimizer.params.items()])}.html")
-    fig.show()
+    # Z = obj_func_hp_optimizer.score(
+    #     func,
+    #     **{f"x{i}": obj_func_hp_optimizer.meshgrid[i] for i in range(obj_func_hp_optimizer.dim)}
+    # )
+    #
+    # # print(f"Z.shape: {Z.shape}")
+    # # print(f"Z[0, 1].shape: {Z[:, :, 0].shape}")
+    #
+    # # ----------------- Figure -------------------- #
+    # fig = go.Figure()
+    #
+    # fig.add_trace(
+    #     go.Surface(
+    #         x=obj_func_hp_optimizer.hp_space["x0"],
+    #         y=obj_func_hp_optimizer.hp_space["x1"],
+    #         z=Z[:, :, ],
+    #     )
+    # )
+    # fig.update_traces(contours_z=dict(show=True, usecolormap=True,
+    #                                   highlightcolor="limegreen", project_z=True))
+    # fig.update_layout(
+    #     title=f'{obj_func_hp_optimizer.dim}D vectorized objective function',
+    #     autosize=True,
+    #     margin=dict(t=150, b=150, l=150, r=150),
+    #     template="seaborn",
+    # )
+    # fig.update_xaxes(title=f"x0: parameter space [-]")
+    # fig.update_yaxes(title=f"x1: parameter space [-]")
+    # # fig.update_zaxes(title="Score [-]")
+    #
+    # # Add dropdown
+    # fig.update_layout(
+    #     updatemenus=[
+    #         dict(
+    #             buttons=list([
+    #                 dict(
+    #                     args=[
+    #                         dict(
+    #                             x=[obj_func_hp_optimizer.hp_space[xi]],
+    #                             y=[obj_func_hp_optimizer.hp_space[xj]],
+    #                             z=Z,
+    #                         ),
+    #                         {
+    #                             # "title": f"{xi}-{xj}",
+    #                             "xaxis.title.text": f"{xi}: parameter space [-]",
+    #                             "yaxis.title.text": f"{xj}: parameter space [-]",
+    #                             "zaxis.title.text": "Score [-]",
+    #                         }
+    #                     ],
+    #                     label=f"{xi}-{xj}",
+    #                     method="update",
+    #                 )
+    #                 for xi in obj_func_hp_optimizer.hp_space for xj in obj_func_hp_optimizer.hp_space if xi != xj
+    #             ]),
+    #             direction="down",
+    #             pad={"r": 10, "t": 10},
+    #             showactive=True,
+    #             x=0.9,
+    #             xanchor="left",
+    #             y=1.1,
+    #             yanchor="middle"
+    #         ),
+    #     ]
+    # )
+    #
+    # save_dir = f"figures/vectorized_objective_function/"
+    # os.makedirs(save_dir, exist_ok=True)
+    # fig.write_html(f"{save_dir}/{'-'.join([f'{k}_{v}' for k, v in obj_func_hp_optimizer.params.items()])}.html")
+    # fig.show()
 
     # ----------------- Optimization -------------------- #
     start_time = time.time()
 
-    param_gen = GPOHpSearch(obj_func_hp_optimizer.hp_space, max_seconds=60*1)
+    param_gen = GPOHpSearch(
+        obj_func_hp_optimizer.hp_space,
+        # max_seconds=60*1,
+        max_itr=10,
+        xi=0.1,
+    )
 
     opt_param_gen = obj_func_hp_optimizer.optimize(
         param_gen,
         np.ones((2, 2)),
         np.ones((2, 2)),
         n_splits=2,
-        stop_criterion=0.95,
+        # stop_criterion=0.95,
     )
 
-    opt_hp = opt_param_gen.get_best_param(from_history=True)
+    opt_hp = opt_param_gen.get_best_param(from_history=False)
     test_acc = obj_func_hp_optimizer.score(
         obj_func_hp_optimizer.build_model(),
         **opt_hp
     )
 
-    opt_param_gen.write_optimization_to_html()
+    opt_param_gen.write_optimization_to_html(dark_mode=False)
     assert test_acc >= 0.95, f"GPO Gen result: {test_acc*100:.3f}% in {time.time() - start_time:.2f} [s]"
     print(f"{opt_hp}, test_acc: {test_acc*100:.3f}")
 

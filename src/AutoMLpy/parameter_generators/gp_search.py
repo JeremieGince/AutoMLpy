@@ -7,7 +7,7 @@ import numpy as np
 import plotly.graph_objects as go
 from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import RBF, Matern
 
 from .parameter_generator import ParameterGenerator
 
@@ -52,12 +52,24 @@ class GPOHpSearch(ParameterGenerator):
         self.xi = kwargs.get("xi", 0.1)
         self.Lambda = kwargs.get("Lambda", 1.0)
         self.bandwidth = kwargs.get("bandwidth", 1.0)
+        self._kernel = self._make_default_kernel()
+        self._kernel_optimizer = kwargs.get("kernel_optimizer", "fmin_l_bfgs_b")
 
         self.X, self.y = [], []
-        self.gpr = GaussianProcessRegressor(RBF(length_scale=self.bandwidth), alpha=self.Lambda, optimizer=None)
+        self.gpr = self._make_default_gpr()
 
         # --------- html data --------- #
         self._expectation_of_params = {}
+
+    def _make_default_kernel(self):
+        return Matern(length_scale=self.bandwidth, nu=5/2)
+
+    def _make_default_gpr(self):
+        return GaussianProcessRegressor(
+            self._kernel,
+            alpha=self.Lambda,
+            optimizer=self._kernel_optimizer,
+        )
 
     def reset(self) -> None:
         """
@@ -68,7 +80,7 @@ class GPOHpSearch(ParameterGenerator):
         super().reset()
 
         self.X, self.y = [], []
-        self.gpr = GaussianProcessRegressor(RBF(length_scale=self.bandwidth), alpha=self.Lambda, optimizer=None)
+        self.gpr = self._make_default_gpr()
 
     @ParameterGenerator.Decorators.increment_counters
     def get_trial_param(self) -> Dict[str, Union[int, float]]:
@@ -129,6 +141,19 @@ class GPOHpSearch(ParameterGenerator):
         Z = improvement / std_hat
         ei = improvement * norm.cdf(Z) + std_hat * norm.pdf(Z)
         return ei
+
+    # def expected_improvement(self) -> np.ndarray:
+    #     """
+    #     Returned the expected improvement of the search score_space.
+    #     """
+    #     f_hat = self.gpr.predict(np.array(self.X))
+    #     f_best = np.max(f_hat)
+    #
+    #     mu_hat, std_hat = self.gpr.predict(self.xx, return_std=True)
+    #     gamma = (f_best - mu_hat) / std_hat
+    #
+    #     ei = std_hat * (gamma * norm.cdf(gamma) + np.random.normal(gamma, self.xi))
+    #     return ei
 
     def show_expectation(self, **kwargs):
         """
@@ -243,11 +268,49 @@ class GPOHpSearch(ParameterGenerator):
         f_hat, std_hat = self.gpr.predict(self.xx, return_std=True)
         f_hat = f_hat.reshape((*_x.shape, -1))
         std_hat = std_hat.reshape((*_x.shape, -1))
-        mean_dim_f_hat = np.mean(f_hat, axis=-1)
-        mean_dim_std_hat = np.mean(std_hat, axis=-1)
+        mu_hat = np.mean(f_hat, axis=-1)
+        std_hat = np.mean(std_hat, axis=-1)
 
         raw_x_dim, raw_y = np.array(self.X)[:, dim], np.array(self.y)
-        return _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y)
+        return _x, mu_hat, std_hat, (raw_x_dim, raw_y)
+
+    def _compute_param_expectation(
+            self,
+            param_name: str
+    ) -> dict:
+        """
+        Get the expectation of hp-score_space.
+
+        _x (np.ndarray): The score_space of the given parameter.
+        mu_hat (np.ndarray): Predicted score of the given hp score_space.
+        std_hat (np.ndarray): Predicted score std of the given hp score_space.
+        raw_x_dim (np.ndarray): X trial score_space of the given parameter.
+        raw_y (np.ndarray): Score of the trial score_space of the given parameter.
+
+        Parameters
+        ----------
+        param_name: The parameter name to show its expectation.
+
+        Return
+        ---------
+        dict of keys and values: [_x, mu_hat, std_hat, raw_x_dim, raw_y]
+        """
+        dim = self._values_names.index(param_name)
+        _x = np.unique(self.xx[:, dim])
+        f_hat = self.gpr.predict(np.array(self.X))
+        mu_hat, std_hat = self.gpr.predict(self.xx, return_std=True)
+        raw_x_dim, raw_y = np.array(self.X)[:, dim], np.array(self.y)
+        ei = self.expected_improvement()
+        return dict(
+            _x=_x,
+            mu_hat=mu_hat,
+            std_hat=std_hat,
+            raw_x_dim=raw_x_dim,
+            raw_y=raw_y,
+            x_dim=np.unique(raw_x_dim),
+            ei=ei,
+            f_hat=f_hat,
+        )
 
     def _init_html_fig(self, x_y_dict: Dict, **kwargs) -> go.Figure:
         fig = super(GPOHpSearch, self)._init_html_fig(x_y_dict, **kwargs)
@@ -255,21 +318,12 @@ class GPOHpSearch(ParameterGenerator):
         self._expectation_of_params = {}
 
         for p in self._values_names:
-            _x, mean_dim_f_hat, mean_dim_std_hat, (raw_x_dim, raw_y) = self._compute_expectation_of_param(p)
-            x_dim = np.unique(raw_x_dim)
-            self._expectation_of_params[p] = dict(
-                _x=_x,
-                mean_dim_f_hat=mean_dim_f_hat,
-                mean_dim_std_hat=mean_dim_std_hat,
-                raw_x_dim=raw_x_dim,
-                raw_y=raw_y,
-                x_dim=x_dim,
-            )
+            self._expectation_of_params[p] = self._compute_param_expectation(p)
 
         # Mean
         fig.add_trace(
             go.Scatter(x=self._expectation_of_params[self._values_names[0]]['_x'],
-                       y=self._expectation_of_params[self._values_names[0]]['mean_dim_f_hat'],
+                       y=self._expectation_of_params[self._values_names[0]]['mu_hat'],
                        mode='lines',
                        name="Mean expectation",
                        line=dict(width=0.5, color='rgba(255, 0, 0, 1.0)'), ),
@@ -279,10 +333,10 @@ class GPOHpSearch(ParameterGenerator):
             go.Scatter(
                 x=list(self._expectation_of_params[self._values_names[0]]['_x'])
                   + list(self._expectation_of_params[self._values_names[0]]['_x'])[::-1],
-                y=list(self._expectation_of_params[self._values_names[0]]['mean_dim_f_hat']
-                       - self._expectation_of_params[self._values_names[0]]['mean_dim_std_hat'])
-                  + list(self._expectation_of_params[self._values_names[0]]['mean_dim_f_hat']
-                         + self._expectation_of_params[self._values_names[0]]['mean_dim_std_hat'])[::-1],
+                y=list(self._expectation_of_params[self._values_names[0]]['mu_hat']
+                       - self._expectation_of_params[self._values_names[0]]['std_hat'])
+                  + list(self._expectation_of_params[self._values_names[0]]['mu_hat']
+                         + self._expectation_of_params[self._values_names[0]]['std_hat'])[::-1],
                 mode='lines',
                 fill="toself",
                 fillcolor='rgba(255, 0, 0, 0.05)',
@@ -290,6 +344,22 @@ class GPOHpSearch(ParameterGenerator):
                 line=dict(width=0.0),
             )
         )
+        # EI
+        fig.add_trace(
+            go.Scatter(x=self._expectation_of_params[self._values_names[0]]['_x'],
+                       y=self._expectation_of_params[self._values_names[0]]['ei'],
+                       mode='lines',
+                       name="Expected improvement",
+                       line=dict(width=0.5, color='rgba(0, 0, 255, 0.8)'), ),
+        )
+        # f_hat
+        # fig.add_trace(
+        #     go.Scatter(x=self._expectation_of_params[self._values_names[0]]['raw_x_dim'],
+        #                y=self._expectation_of_params[self._values_names[0]]['f_hat'],
+        #                mode='markers',
+        #                name="f_hat",
+        #                line=dict(width=0.5, color='rgba(0, 255, 0, 0.8)'), ),
+        # )
 
         fig.update_layout(legend=dict(
             yanchor="top",
@@ -312,15 +382,17 @@ class GPOHpSearch(ParameterGenerator):
                                         x_y_dict[p_name]['x'],
                                         self._expectation_of_params[p_name]['_x'],
                                         list(self._expectation_of_params[p_name]['_x'])
-                                        + list(self._expectation_of_params[p_name]['_x'])[::-1]
+                                        + list(self._expectation_of_params[p_name]['_x'])[::-1],
+                                        self._expectation_of_params[p_name]['_x']
                                     ],
                                     y=[
                                         x_y_dict[p_name]['y'],
-                                        self._expectation_of_params[p_name]['mean_dim_f_hat'],
-                                        list(self._expectation_of_params[p_name]['mean_dim_f_hat']
-                                             - self._expectation_of_params[p_name]['mean_dim_std_hat'])
-                                        + list(self._expectation_of_params[p_name]['mean_dim_f_hat']
-                                               + self._expectation_of_params[p_name]['mean_dim_std_hat'])[::-1]
+                                        self._expectation_of_params[p_name]['mu_hat'],
+                                        list(self._expectation_of_params[p_name]['mu_hat']
+                                             - self._expectation_of_params[p_name]['std_hat'])
+                                        + list(self._expectation_of_params[p_name]['mu_hat']
+                                               + self._expectation_of_params[p_name]['std_hat'])[::-1],
+                                        self._expectation_of_params[p_name]['ei']
                                     ],
                                     marker=dict(color=x_y_dict[p_name]['y'], showscale=True),
                                 ),
