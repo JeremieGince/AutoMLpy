@@ -90,8 +90,12 @@ class GPOHpSearch(ParameterGenerator):
         Increase the current_itr counter.
         """
         if len(self.X) > 0:
-            eis = self.expected_improvement()
-            idx = np.argmax(eis)
+            if self.minimise:
+                eis = self.expected_improvement_minimise()
+                idx = np.argmax(eis)
+            else:
+                eis = self.expected_improvement_maximise()
+                idx = np.argmin(eis)
         else:
             idx = np.random.randint(self.xx.shape[0])
 
@@ -103,6 +107,15 @@ class GPOHpSearch(ParameterGenerator):
         """
         Get the best predicted parameters with the current exploration.
         """
+        if self.minimise:
+            return self._get_best_param_minimise(**kwargs)
+        else:
+            return self._get_best_param_maximise(**kwargs)
+
+    def _get_best_param_maximise(self, **kwargs):
+        """
+        Get the best (max) predicted parameters with the current exploration.
+        """
         f_hat = self.gpr.predict(self.xx)
         if kwargs.get("from_history", True):
             f_hat_max = np.max(f_hat)
@@ -110,6 +123,20 @@ class GPOHpSearch(ParameterGenerator):
             if history_max[1] >= f_hat_max:
                 return history_max[0]
         b_sub_space = self.xx[np.argmax(f_hat)]
+        b_params = self.convert_subspace_to_param(b_sub_space)
+        return b_params
+
+    def _get_best_param_minimise(self, **kwargs):
+        """
+        Get the best (min) predicted parameters with the current exploration.
+        """
+        f_hat = self.gpr.predict(self.xx)
+        if kwargs.get("from_history", True):
+            f_hat_min = np.min(f_hat)
+            history_min = min(self.history, key=lambda t: t[-1])
+            if history_min[1] >= f_hat_min:
+                return history_min[0]
+        b_sub_space = self.xx[np.argmin(f_hat)]
         b_params = self.convert_subspace_to_param(b_sub_space)
         return b_params
 
@@ -128,7 +155,7 @@ class GPOHpSearch(ParameterGenerator):
         self.y.append(score)
         self.gpr.fit(np.array(self.X), np.array(self.y))
 
-    def expected_improvement(self) -> np.ndarray:
+    def expected_improvement_maximise(self) -> np.ndarray:
         """
         Returned the expected improvement of the search score_space.
         """
@@ -142,18 +169,18 @@ class GPOHpSearch(ParameterGenerator):
         ei = improvement * norm.cdf(Z) + std_hat * norm.pdf(Z)
         return ei
 
-    # def expected_improvement(self) -> np.ndarray:
-    #     """
-    #     Returned the expected improvement of the search score_space.
-    #     """
-    #     f_hat = self.gpr.predict(np.array(self.X))
-    #     f_best = np.max(f_hat)
-    #
-    #     mu_hat, std_hat = self.gpr.predict(self.xx, return_std=True)
-    #     gamma = (f_best - mu_hat) / std_hat
-    #
-    #     ei = std_hat * (gamma * norm.cdf(gamma) + np.random.normal(gamma, self.xi))
-    #     return ei
+    def expected_improvement_minimise(self) -> np.ndarray:
+        """
+        Returned the expected improvement of the search score_space.
+        """
+        f_hat = self.gpr.predict(np.array(self.X))
+        f_best = np.min(f_hat)
+
+        mu_hat, std_hat = self.gpr.predict(self.xx, return_std=True)
+        gamma = (f_best - mu_hat) / std_hat
+
+        ei = std_hat * (gamma * norm.cdf(gamma) + np.random.normal(gamma, self.xi))
+        return ei
 
     def show_expectation(self, **kwargs):
         """

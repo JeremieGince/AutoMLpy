@@ -187,6 +187,8 @@ class HpOptimizer:
         kwargs:
             stop_criterion: If the score once reach this criterion the optimization will stop. (float)
             reset_gen: True to reset the parameter generator before the optimization else False. (bool) Default: True.
+            minimise: True to minimise the score and False to maximise it. If specified, will update the value of
+                        param_gen.minimise. Default: take the value of param_gen.minimise.
 
         Return
         ---------
@@ -196,6 +198,7 @@ class HpOptimizer:
             save_kwargs = {}
         warnings.simplefilter("ignore", UserWarning)
 
+        param_gen.minimise = kwargs.get("minimise", param_gen.minimise)
         nb_workers = self._setup_nb_workers(nb_workers, verbose, **kwargs)
 
         stop_criterion = kwargs.get("stop_criterion", None)
@@ -326,6 +329,8 @@ class HpOptimizer:
         kwargs:
             stop_criterion: If the score once reach this criterion the optimization will stop. (float)
             reset_gen: True to reset the parameter generator before the optimization else False. (bool) Default: True.
+            minimise: True to minimise the score and False to maximise it. If specified, will update the value of
+                        param_gen.minimise. Default: take the value of param_gen.minimise.
 
         Return
         ---------
@@ -335,6 +340,7 @@ class HpOptimizer:
             save_kwargs = {}
         warnings.simplefilter("ignore", UserWarning)
 
+        param_gen.minimise = kwargs.get("minimise", param_gen.minimise)
         nb_workers = self._setup_nb_workers(nb_workers, verbose, **kwargs)
 
         stop_criterion = kwargs.get("stop_criterion", None)

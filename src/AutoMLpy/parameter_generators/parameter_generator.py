@@ -82,6 +82,7 @@ class ParameterGenerator:
         # ------- Hp score_space -------- #
         self.xx = np.meshgrid(*[values_dict[p] for p in self._values_names])
         self.xx = np.array(list(zip(*[_x.ravel() for _x in self.xx])))
+        self.minimise = kwargs.get("minimise", True)
 
         # ------- Counters -------- #
         self.current_itr: int = 0
@@ -181,7 +182,10 @@ class ParameterGenerator:
         """
         if len(self.history) == 0:
             raise ValueError("get_best_param must be called after an optimisation")
-        return max(self.history, key=lambda t: t[-1])[0]
+        if self.minimise:
+            return min(self.history, key=lambda t: t[-1])[0]
+        else:
+            return max(self.history, key=lambda t: t[-1])[0]
 
     def get_best_params_repr(self, **kwargs) -> str:
         if len(self.history) > 0:
