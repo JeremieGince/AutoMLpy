@@ -157,7 +157,10 @@ class GPOHpSearch(ParameterGenerator):
         self.X.append([param[p] for p in self._values_names])
         self.y.append(score)
         if kwargs.get("gpr_fit", True):
-            self.gpr.fit(np.array(self.X), np.array(self.y))
+            self.gpr_fit_()
+
+    def gpr_fit_(self):
+        self.gpr.fit(np.array(self.X), np.array(self.y))
 
     def expected_improvement(self) -> Tuple[np.ndarray, np.ndarray]:
         if self.minimise:
