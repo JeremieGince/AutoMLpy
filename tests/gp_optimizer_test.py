@@ -74,6 +74,32 @@ class TestGPHpOptimizerObjFunc(unittest.TestCase):
         self.assertTrue(elapsed_time <= 1.1*param_gen.max_seconds)
         self.assertTrue(param_gen.current_itr <= param_gen.max_itr)
 
+    def test_itr_counter(self):
+        obj_func_hp_optimizer = ObjectiveFuncHpOptimizer()
+        max_itr = 10
+        param_gen = GPOHpSearch(obj_func_hp_optimizer.hp_space, max_seconds=np.inf, max_itr=max_itr)
+        self.assertTrue(param_gen.max_itr == max_itr)
+        for i in range(max_itr):
+            self.assertTrue(param_gen.current_itr == i)
+            param_gen.get_trial_param()
+
+        self.assertTrue(param_gen.current_itr == max_itr)
+        param_gen.reset()
+        self.assertTrue(param_gen.current_itr == 0)
+
+    def test_itr_counter_optimize(self):
+        obj_func_hp_optimizer = ObjectiveFuncHpOptimizer()
+        max_itr = 10
+        param_gen = GPOHpSearch(obj_func_hp_optimizer.hp_space, max_seconds=np.inf, max_itr=max_itr)
+        self.assertTrue(param_gen.current_itr == 0)
+        param_gen = obj_func_hp_optimizer.optimize(
+            param_gen,
+            np.ones((2, 2)),
+            np.ones((2, 2)),
+            n_splits=2,
+        )
+        self.assertTrue(param_gen.current_itr == max_itr)
+
 
 if __name__ == '__main__':
     unittest.main()
