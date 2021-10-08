@@ -1,13 +1,14 @@
 import os
-from typing import Dict, Union, List, Iterable, Tuple
+from typing import Dict, Union, List, Iterable, Tuple, Type
 import warnings
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
 from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern
+from sklearn.gaussian_process.kernels import Matern, ConstantKernel, RBF, RationalQuadratic
 
 from .parameter_generator import ParameterGenerator
 
@@ -52,6 +53,7 @@ class GPOHpSearch(ParameterGenerator):
         self.xi = kwargs.get("xi", 0.1)
         self.Lambda = kwargs.get("Lambda", 1.0)
         self.bandwidth = kwargs.get("bandwidth", 1.0)
+        self.gpr_n_restarts_optimizer = kwargs.get("gpr_n_restarts_optimizer", 10)
         self._kernel = self._make_default_kernel()
         self._kernel_optimizer = kwargs.get("kernel_optimizer", "fmin_l_bfgs_b")
 
@@ -62,13 +64,19 @@ class GPOHpSearch(ParameterGenerator):
         self._expectation_of_params = {}
 
     def _make_default_kernel(self):
-        return Matern(length_scale=self.bandwidth, nu=5/2)
+        C = ConstantKernel(constant_value=1.0, constant_value_bounds=(1e-5, 1e3))
+        k0 = Matern(length_scale=self.bandwidth, nu=5 / 2)
+        k1 = RBF(length_scale=self.bandwidth)
+        k2 = RationalQuadratic(length_scale=self.bandwidth)
+        kernel = sum([deepcopy(C) * k for k in [k0, k1, k2]])
+        return kernel
 
     def _make_default_gpr(self):
         return GaussianProcessRegressor(
             self._kernel,
             alpha=self.Lambda,
             optimizer=self._kernel_optimizer,
+            n_restarts_optimizer=self.gpr_n_restarts_optimizer,
         )
 
     def reset(self) -> None:
@@ -90,12 +98,7 @@ class GPOHpSearch(ParameterGenerator):
         Increase the current_itr counter.
         """
         if len(self.X) > 0:
-            if self.minimise:
-                eis = self.expected_improvement_minimise()
-                idx = np.argmax(eis)
-            else:
-                eis = self.expected_improvement_maximise()
-                idx = np.argmin(eis)
+            eis, idx = self.expected_improvement()
         else:
             idx = np.random.randint(self.xx.shape[0])
 
@@ -134,13 +137,13 @@ class GPOHpSearch(ParameterGenerator):
         if kwargs.get("from_history", True):
             f_hat_min = np.min(f_hat)
             history_min = min(self.history, key=lambda t: t[-1])
-            if history_min[1] >= f_hat_min:
+            if history_min[1] <= f_hat_min:
                 return history_min[0]
         b_sub_space = self.xx[np.argmin(f_hat)]
         b_params = self.convert_subspace_to_param(b_sub_space)
         return b_params
 
-    def add_score_info(self, param, score):
+    def add_score_info(self, param, score, **kwargs):
         """
         Add the result of the trial parameters.
 
@@ -153,7 +156,17 @@ class GPOHpSearch(ParameterGenerator):
 
         self.X.append([param[p] for p in self._values_names])
         self.y.append(score)
-        self.gpr.fit(np.array(self.X), np.array(self.y))
+        if kwargs.get("gpr_fit", True):
+            self.gpr.fit(np.array(self.X), np.array(self.y))
+
+    def expected_improvement(self) -> Tuple[np.ndarray, np.ndarray]:
+        if self.minimise:
+            eis = self.expected_improvement_minimise()
+            idx = np.argmax(eis)
+        else:
+            eis = self.expected_improvement_maximise()
+            idx = np.argmin(eis)
+        return eis, idx
 
     def expected_improvement_maximise(self) -> np.ndarray:
         """
@@ -327,7 +340,7 @@ class GPOHpSearch(ParameterGenerator):
         f_hat = self.gpr.predict(np.array(self.X))
         mu_hat, std_hat = self.gpr.predict(self.xx, return_std=True)
         raw_x_dim, raw_y = np.array(self.X)[:, dim], np.array(self.y)
-        ei = self.expected_improvement()
+        ei, _ = self.expected_improvement()
         return dict(
             _x=_x,
             mu_hat=mu_hat,
