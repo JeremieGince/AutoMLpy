@@ -1,3 +1,4 @@
+import pprint
 from typing import Callable
 import os
 import time
@@ -97,6 +98,7 @@ if __name__ == '__main__':
     obj_func_hp_optimizer.set_dim(1)
     func = obj_func_hp_optimizer.build_model()
     print(f"Maximum of objective function: {obj_func_hp_optimizer.max:.3f}")
+    print(f"Minimum of objective function: {obj_func_hp_optimizer.min:.3f}")
     # Z = obj_func_hp_optimizer.score(
     #     func,
     #     **{f"x{i}": obj_func_hp_optimizer.meshgrid[i] for i in range(obj_func_hp_optimizer.dim)}
@@ -173,8 +175,10 @@ if __name__ == '__main__':
     param_gen = GPOHpSearch(
         obj_func_hp_optimizer.hp_space,
         # max_seconds=60*1,
-        max_itr=10,
+        max_itr=200,
         xi=0.1,
+        minimise=True,
+        gpr_n_restarts_optimizer=2,
     )
 
     opt_param_gen = obj_func_hp_optimizer.optimize(
@@ -182,16 +186,17 @@ if __name__ == '__main__':
         np.ones((2, 2)),
         np.ones((2, 2)),
         n_splits=2,
-        # stop_criterion=0.95,
+        # stop_criterion=0.05,
     )
 
-    opt_hp = opt_param_gen.get_best_param(from_history=False)
+    opt_hp = opt_param_gen.get_best_param(from_history=True)
     test_acc = obj_func_hp_optimizer.score(
         obj_func_hp_optimizer.build_model(),
         **opt_hp
     )
 
     opt_param_gen.write_optimization_to_html(dark_mode=False)
-    assert test_acc >= 0.95, f"GPO Gen result: {test_acc*100:.3f}% in {time.time() - start_time:.2f} [s]"
+    # pprint.pprint(opt_param_gen.history, indent=3)
+    # assert test_acc >= 0.95, f"GPO Gen result: {test_acc*100:.3f}% in {time.time() - start_time:.2f} [s]"
     print(f"{opt_hp}, test_acc: {test_acc*100:.3f}")
 
