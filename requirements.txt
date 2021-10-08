@@ -3,8 +3,8 @@ matplotlib==3.3.3
 numpy==1.19.5
 pandas==1.2.1
 plotly==4.14.3
-scikit-learn==0.24.1
-scipy==1.6.0
+scikit-learn==1.0.0
+scipy==1.7.1
 tqdm==4.56.0
 psutil>=5.8.0
 
