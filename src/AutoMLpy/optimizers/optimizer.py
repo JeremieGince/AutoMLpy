@@ -196,7 +196,10 @@ class HpOptimizer:
         """
         if save_kwargs is None:
             save_kwargs = {}
-        warnings.simplefilter("ignore", UserWarning)
+
+        if kwargs.get("filterwarnings", True):
+            warnings.simplefilter("ignore", UserWarning)
+            warnings.simplefilter("ignore", RuntimeWarning)
 
         param_gen.minimise = kwargs.get("minimise", param_gen.minimise)
         nb_workers = self._setup_nb_workers(nb_workers, verbose, **kwargs)
@@ -268,7 +271,7 @@ class HpOptimizer:
             param_gen: ParameterGenerator,
             trial_outputs: List[Tuple[dict, float]],
             stop_criterion: float,
-            progress: tqdm.tqdm,
+            progress_bar: tqdm.tqdm,
             verbose: bool,
     ) -> bool:
         """
@@ -280,7 +283,7 @@ class HpOptimizer:
         param_gen: The parameter generator.
         trial_outputs: The list of outputs made by the multiple trials as list of tuples (parameters, score).
         stop_criterion: If the score once reach this criterion the optimization will stop. (float)
-        progress: Progress bar.
+        progress_bar: Progress bar.
         verbose: True to print some stats else False.
 
         Returns
@@ -288,6 +291,10 @@ class HpOptimizer:
         The stop_criterion_trigger.
         """
         stop_criterion_trigger = False
+        if param_gen.minimise:
+            check_stop_criterion = lambda v: stop_criterion >= v
+        else:
+            check_stop_criterion = lambda v: stop_criterion <= v
 
         for (params, mean_score) in trial_outputs:
             param_gen.add_score_info(params, mean_score)
@@ -295,10 +302,10 @@ class HpOptimizer:
             if verbose:
                 logging.debug(f"param_gen: curr_itr: {param_gen.current_itr}")
                 logging.debug(f"trial_params: {params} --> mean score: {mean_score:.3f}")
-                progress.set_postfix_str(f"mean_score: {mean_score:.2f}")
-                progress.update()
+                progress_bar.set_postfix_str(f"mean_score: {mean_score:.2f}")
+                # progress_bar.update()
 
-            if stop_criterion is not None and stop_criterion <= mean_score:
+            if stop_criterion is not None and check_stop_criterion(mean_score):
                 if verbose:
                     logging.info(f"Early stopping ->"
                                  f" itr: {param_gen.current_itr},"
