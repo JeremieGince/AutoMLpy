@@ -90,7 +90,7 @@ class VectorizedObjectiveFuncHpOptimizer(HpOptimizer):
 
 if __name__ == '__main__':
     import plotly.graph_objects as go
-    from src.AutoMLpy import GPOHpSearch
+    from src.AutoMLpy import GPOHpSearch, MLPEpsilonGreedySearch
 
     # ----------------- Initialization -------------------- #
     obj_func_hp_optimizer = VectorizedObjectiveFuncHpOptimizer()
@@ -172,13 +172,22 @@ if __name__ == '__main__':
     # ----------------- Optimization -------------------- #
     start_time = time.time()
 
-    param_gen = GPOHpSearch(
+    # param_gen = GPOHpSearch(
+    #     obj_func_hp_optimizer.hp_space,
+    #     # max_seconds=60*1,
+    #     max_itr=200,
+    #     xi=0.1,
+    #     minimise=True,
+    #     gpr_n_restarts_optimizer=2,
+    # )
+
+    param_gen = MLPEpsilonGreedySearch(
         obj_func_hp_optimizer.hp_space,
         # max_seconds=60*1,
-        max_itr=200,
+        max_itr=100,
         xi=0.1,
         minimise=True,
-        gpr_n_restarts_optimizer=2,
+        hidden_layer_sizes=(100, 100, )
     )
 
     opt_param_gen = obj_func_hp_optimizer.optimize(
