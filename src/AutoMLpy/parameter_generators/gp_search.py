@@ -8,6 +8,7 @@ import numpy as np
 import plotly.graph_objects as go
 from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.ensemble import BaggingRegressor
 from sklearn.gaussian_process.kernels import Matern, ConstantKernel, RBF, RationalQuadratic
 
 from .parameter_generator import ParameterGenerator
@@ -54,7 +55,8 @@ class GPOHpSearch(ParameterGenerator):
         self.Lambda = kwargs.get("Lambda", 1.0)
         self.bandwidth = kwargs.get("bandwidth", 1.0)
         self.gpr_n_restarts_optimizer = kwargs.get("gpr_n_restarts_optimizer", 10)
-        self._kernel = self._make_default_kernel()
+        self._default_kernel = kwargs.get("kernel", self._make_default_kernel())
+        self._kernel = deepcopy(self._default_kernel)
         self._kernel_optimizer = kwargs.get("kernel_optimizer", "fmin_l_bfgs_b")
 
         self.X, self.y = [], []
@@ -77,6 +79,7 @@ class GPOHpSearch(ParameterGenerator):
             alpha=self.Lambda,
             optimizer=self._kernel_optimizer,
             n_restarts_optimizer=self.gpr_n_restarts_optimizer,
+            copy_X_train=False,
         )
 
     def reset(self) -> None:
@@ -88,6 +91,7 @@ class GPOHpSearch(ParameterGenerator):
         super().reset()
 
         self.X, self.y = [], []
+        self._kernel = deepcopy(self._default_kernel)
         self.gpr = self._make_default_gpr()
 
     @ParameterGenerator.Decorators.increment_counters
@@ -160,7 +164,11 @@ class GPOHpSearch(ParameterGenerator):
             self.gpr_fit_()
 
     def gpr_fit_(self):
-        self.gpr.fit(np.array(self.X), np.array(self.y))
+        try:
+            self.gpr.fit(np.array(self.X), np.array(self.y))
+        except MemoryError:
+            self.gpr = BaggingRegressor(base_estimator=self.gpr, n_estimators=10)
+            self.gpr.fit(np.array(self.X), np.array(self.y))
 
     def expected_improvement(self) -> Tuple[np.ndarray, np.ndarray]:
         if self.minimise:
