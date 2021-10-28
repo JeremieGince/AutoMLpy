@@ -212,6 +212,7 @@ class HpOptimizer:
             param_gen.reset()
 
         progress_bar = tqdm.tqdm(range(param_gen.max_itr), unit='itr', postfix="optimisation") if verbose else None
+        progress_bar.update(param_gen.current_itr)
         while bool(param_gen) and not stop_criterion_trigger:
             try:
                 workers_required = min(nb_workers, param_gen.max_itr - param_gen.current_itr)
@@ -356,6 +357,7 @@ class HpOptimizer:
             param_gen.reset()
 
         progress_bar = tqdm.tqdm(range(param_gen.max_itr), unit='itr', postfix="optimisation") if verbose else None
+        progress_bar.update(param_gen.current_itr)
         while bool(param_gen) and not stop_criterion_trigger:
             try:
                 workers_required = min(nb_workers, param_gen.max_itr - param_gen.current_itr)
