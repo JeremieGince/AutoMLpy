@@ -811,8 +811,8 @@ class ParameterGenerator:
 
         return path
 
-    @staticmethod
-    def load_obj(path: str, **kwargs) -> 'ParameterGenerator':
+    @classmethod
+    def load_obj(cls, path: str, **kwargs) -> 'ParameterGenerator':
         """
         Load the ParameterGenerator and reset the start time.
 
@@ -824,12 +824,12 @@ class ParameterGenerator:
 
         Returns
         -------
-        The ParameterGenerator object.
+        The cls object.
         """
         with open(path, 'rb') as f:
             obj = pickle.load(f)
 
-        if not isinstance(obj, ParameterGenerator):
+        if not isinstance(obj, cls):
             raise TypeError(f"The object at {path} is not a ParameterGenerator")
 
         obj.start_time = time.time()
