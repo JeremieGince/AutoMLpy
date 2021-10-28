@@ -95,7 +95,7 @@ class GPOHpSearch(ParameterGenerator):
         self.gpr = self._make_default_gpr()
 
     @ParameterGenerator.Decorators.increment_counters
-    def get_trial_param(self) -> Dict[str, Union[int, float]]:
+    def get_trial_param(self, worker_id: int = 0) -> Dict[str, Union[int, float]]:
         """
         Returned a set of trial parameter.
 
