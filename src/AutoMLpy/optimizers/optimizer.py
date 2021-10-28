@@ -462,7 +462,7 @@ class HpOptimizer:
         -------
         The list of outputs made by the multiple trials as list of tuples (parameters, score).
         """
-        params_list = [param_gen.get_trial_param() for _ in range(nb_workers)]
+        params_list = [param_gen.get_trial_param(worker_id=i) for i in range(nb_workers)]
         with Pool(nb_workers) as p:
             scores = p.starmap(self._try_params_on_X_y, [
                 (params, X, y, n_splits)
@@ -515,7 +515,7 @@ class HpOptimizer:
         -------
         The output score of the trial.
         """
-        if n_splits >= 1:
+        if n_splits <= 1:
             return self._try_params_on_X_y_without_kfold(params, X, y)
 
         kf = KFold(n_splits=n_splits, shuffle=True)
@@ -619,7 +619,7 @@ class HpOptimizer:
         -------
         The list of outputs made by the multiple trials as list of tuples (parameters, score).
         """
-        params_list = [param_gen.get_trial_param() for _ in range(nb_workers)]
+        params_list = [param_gen.get_trial_param(i) for i in range(nb_workers)]
         with Pool(nb_workers) as p:
             scores = p.starmap(self._try_params_on_dataset, [
                 (params, dataset)
