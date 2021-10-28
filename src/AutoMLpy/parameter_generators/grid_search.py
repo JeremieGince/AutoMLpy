@@ -18,7 +18,7 @@ class GridHpSearch(ParameterGenerator):
         return max(self.max_itr, len(self.xx))
 
     @ParameterGenerator.Decorators.increment_counters
-    def get_trial_param(self):
+    def get_trial_param(self, worker_id: int = 0):
         self.idx = self.current_itr % len(self.xx)
         t_param = self.convert_subspace_to_param(self.xx[self.idx])
         return t_param
