@@ -31,7 +31,7 @@ class RandomHpSearch(ParameterGenerator):
         np.random.shuffle(self._idx_choices)
 
     @ParameterGenerator.Decorators.increment_counters
-    def get_trial_param(self) -> Dict[Union[str, int], object]:
+    def get_trial_param(self, worker_id: int = 0) -> Dict[Union[str, int], object]:
         """
         Returned a set of trial parameter.
         """
