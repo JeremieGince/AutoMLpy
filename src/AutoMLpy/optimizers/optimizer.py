@@ -186,7 +186,7 @@ class HpOptimizer:
         verbose: True to print some stats else False.
         kwargs:
             stop_criterion: If the score once reach this criterion the optimization will stop. (float)
-            reset_gen: True to reset the parameter generator before the optimization else False. (bool) Default: True.
+            reset_gen: True to reset the parameter generator before the optimization else False. (bool) Default: False.
             minimise: True to minimise the score and False to maximise it. If specified, will update the value of
                         param_gen.minimise. Default: take the value of param_gen.minimise.
 
@@ -196,6 +196,7 @@ class HpOptimizer:
         """
         if save_kwargs is None:
             save_kwargs = {}
+        save_kwargs.setdefault("save_each_run", 1)
 
         if kwargs.get("filterwarnings", True):
             warnings.simplefilter("ignore", UserWarning)
@@ -207,30 +208,27 @@ class HpOptimizer:
         stop_criterion = kwargs.get("stop_criterion", None)
         stop_criterion_trigger = False
 
-        if kwargs.get("reset_gen", True):
+        if kwargs.get("reset_gen", False):
             param_gen.reset()
 
-        if verbose:
-            progress = tqdm.tqdm(range(param_gen.max_itr), unit='itr', postfix="optimisation")
-        else:
-            progress = range(param_gen.max_itr)
-        for i in progress:
-            if not bool(param_gen) or stop_criterion_trigger:
-                break
+        progress_bar = tqdm.tqdm(range(param_gen.max_itr), unit='itr', postfix="optimisation") if verbose else None
+        while bool(param_gen) and not stop_criterion_trigger:
             try:
-                workers_required = min(nb_workers, param_gen.max_itr - i)
+                workers_required = min(nb_workers, param_gen.max_itr - param_gen.current_itr)
                 outputs = self._process_trial_on_X_y(param_gen, X, y, n_splits, workers_required)
 
                 stop_criterion_trigger = self._post_process_trial_(
-                    param_gen, outputs, stop_criterion, progress, verbose
+                    param_gen, outputs, stop_criterion, progress_bar, verbose
                 )
+                if param_gen.current_itr % save_kwargs["save_each_run"] == 0:
+                    param_gen.save_obj(**save_kwargs)
 
             except Exception as ee:
                 logging.error(str(ee))
                 raise ee
 
         if verbose:
-            progress.close()
+            progress_bar.close()
 
         param_gen.save_obj(**save_kwargs)
         param_gen.save_history(**save_kwargs)
@@ -303,7 +301,7 @@ class HpOptimizer:
                 logging.debug(f"param_gen: curr_itr: {param_gen.current_itr}")
                 logging.debug(f"trial_params: {params} --> mean score: {mean_score:.3f}")
                 progress_bar.set_postfix_str(f"mean_score: {mean_score:.2f}")
-                # progress_bar.update()
+                progress_bar.update()
 
             if stop_criterion is not None and check_stop_criterion(mean_score):
                 if verbose:
@@ -335,7 +333,7 @@ class HpOptimizer:
         verbose: True to print some stats else False.
         kwargs:
             stop_criterion: If the score once reach this criterion the optimization will stop. (float)
-            reset_gen: True to reset the parameter generator before the optimization else False. (bool) Default: True.
+            reset_gen: True to reset the parameter generator before the optimization else False. (bool) Default: False.
             minimise: True to minimise the score and False to maximise it. If specified, will update the value of
                         param_gen.minimise. Default: take the value of param_gen.minimise.
 
@@ -345,6 +343,7 @@ class HpOptimizer:
         """
         if save_kwargs is None:
             save_kwargs = {}
+        save_kwargs.setdefault("save_each_run", 1)
         warnings.simplefilter("ignore", UserWarning)
 
         param_gen.minimise = kwargs.get("minimise", param_gen.minimise)
@@ -353,30 +352,27 @@ class HpOptimizer:
         stop_criterion = kwargs.get("stop_criterion", None)
         stop_criterion_trigger = False
 
-        if kwargs.get("reset_gen", True):
+        if kwargs.get("reset_gen", False):
             param_gen.reset()
 
-        if verbose:
-            progress = tqdm.tqdm(range(param_gen.max_itr), unit='itr', postfix="optimisation")
-        else:
-            progress = range(param_gen.max_itr)
-        for i in progress:
-            if not bool(param_gen) or stop_criterion_trigger:
-                break
+        progress_bar = tqdm.tqdm(range(param_gen.max_itr), unit='itr', postfix="optimisation") if verbose else None
+        while bool(param_gen) and not stop_criterion_trigger:
             try:
-                workers_required = min(nb_workers, param_gen.max_itr - i)
+                workers_required = min(nb_workers, param_gen.max_itr - param_gen.current_itr)
                 outputs = self._process_trial_on_dataset(param_gen, dataset, workers_required)
 
                 stop_criterion_trigger = self._post_process_trial_(
-                    param_gen, outputs, stop_criterion, progress, verbose
+                    param_gen, outputs, stop_criterion, progress_bar, verbose
                 )
+                if param_gen.current_itr % save_kwargs["save_each_run"] == 0:
+                    param_gen.save_obj(**save_kwargs)
 
             except Exception as ee:
                 logging.error(str(ee))
                 raise ee
 
         if verbose:
-            progress.close()
+            progress_bar.close()
 
         param_gen.save_obj(**save_kwargs)
         param_gen.save_history(**save_kwargs)
