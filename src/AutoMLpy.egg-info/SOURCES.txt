@@ -12,7 +12,9 @@ src/AutoMLpy.egg-info/top_level.txt
 src/AutoMLpy/optimizers/__init__.py
 src/AutoMLpy/optimizers/optimizer.py
 src/AutoMLpy/parameter_generators/__init__.py
+src/AutoMLpy/parameter_generators/forest_search.py
 src/AutoMLpy/parameter_generators/gp_search.py
 src/AutoMLpy/parameter_generators/grid_search.py
+src/AutoMLpy/parameter_generators/mlp_search.py
 src/AutoMLpy/parameter_generators/parameter_generator.py
 src/AutoMLpy/parameter_generators/random_search.py
