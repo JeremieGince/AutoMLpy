@@ -19,10 +19,8 @@ import matplotlib.pyplot as plt
 
 # ------- App Server -------- #
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
-# from dash import html
-# from dash import dcc
+from dash import html
+from dash import dcc
 from dash.dependencies import Input, Output
 
 
@@ -36,8 +34,7 @@ class ParameterGenerator:
         def increment_counters(cls, method):
             def wrapper(self, *args, **kwargs):
                 out = method(self, *args, **kwargs)
-                self.elapse_time_per_iteration[self.current_itr] = self.elapse_time
-                self.current_itr += 1
+                self.increment_counters()
                 return out
 
             return wrapper
@@ -87,7 +84,7 @@ class ParameterGenerator:
         self.minimise = kwargs.get("minimise", True)
 
         # ------- Counters -------- #
-        self.current_itr: int = 0
+        self._current_itr: int = 0
         self.max_itr = int(kwargs.get("max_itr", len(self.xx)))
         self.start_time = time.time()
         self.max_seconds = kwargs.get("max_seconds", 60 ** 2)
@@ -121,6 +118,10 @@ class ParameterGenerator:
                 values_dict[p] = self.convert_param_to_idx(p, values_dict[p])
 
     @property
+    def current_itr(self) -> int:
+        return self._current_itr
+
+    @property
     def hp_names(self) -> List[str]:
         return self._values_names
 
@@ -129,7 +130,7 @@ class ParameterGenerator:
         Reset the current the parameter generator.
         """
         self.start_time = time.time()
-        self.current_itr = 0
+        self._current_itr = 0
 
     @property
     def elapse_time(self) -> float:
@@ -152,6 +153,10 @@ class ParameterGenerator:
         The elapsed time of the last itr.
         """
         return self.elapse_time_per_iteration[self.current_itr - 1]
+
+    def increment_counters(self):
+        self.elapse_time_per_iteration[self.current_itr] = self.elapse_time
+        self._current_itr += 1
 
     def __len__(self) -> int:
         """
