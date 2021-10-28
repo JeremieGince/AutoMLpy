@@ -172,7 +172,7 @@ class ParameterGenerator:
         return str(self.__dict__)
 
     @Decorators.increment_counters
-    def get_trial_param(self) -> Dict[str, Union[int, float]]:
+    def get_trial_param(self, worker_id: int = 0) -> Dict[str, Union[int, float]]:
         """
         Returned a set of trial parameter.
         """
