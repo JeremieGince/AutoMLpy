@@ -44,14 +44,21 @@ class MLPEpsilonGreedySearch(ParameterGenerator):
         self.start_time (int): Starting time of the optimisation.
         self.X (List): List of the trial hp.
         self.y (List): List of associated score of the trial hp (self.X).
-        self.mlp (MLPRegressor): The mlp used to make the predictions.
+        self.mlp (List[MLPRegressor]): The mlp instances used to make the predictions.
         """
         super(MLPEpsilonGreedySearch, self).__init__(values_dict, **kwargs)
 
         self.xi = kwargs.get("xi", 0.1)
         self.xi_decay = kwargs.get("xi_decay", 0.0)
+        self.min_xi = kwargs.get("min_xi", 1e-2)
         self.nb_exploration_itr = kwargs.get("nb_exploration_itr", 10)
-        self._hidden_layer_sizes = kwargs.get("hidden_layer_sizes", (100, 100, ))
+        self._hidden_layer_sizes = kwargs.get("hidden_layer_sizes", [(100, 100, ), ])
+        if np.asarray(self._hidden_layer_sizes).ndim == 0:
+            self._hidden_layer_sizes = [(self._hidden_layer_sizes, ), ]
+        elif np.asarray(self._hidden_layer_sizes).ndim == 1:
+            self._hidden_layer_sizes = [self._hidden_layer_sizes, ]
+        elif np.asarray(self._hidden_layer_sizes).ndim > 2:
+            raise ValueError("Too much dimension for 'hidden_layer_sizes', must be zero, one or two dimensional.")
 
         self.X, self.y = [], []
         self.mlp = self._make_default_mlp()
@@ -60,10 +67,22 @@ class MLPEpsilonGreedySearch(ParameterGenerator):
         self._expectation_of_params = {}
 
     def _make_default_mlp(self):
-        return MLPRegressor(
-            hidden_layer_sizes=self._hidden_layer_sizes,
+        return [MLPRegressor(
+            hidden_layer_sizes=hhs,
             learning_rate="adaptive",
             early_stopping=False,
+        ) for hhs in self._hidden_layer_sizes]
+
+    def _add_random_mlp_instance_(self):
+        hhs_dim = np.random.randint(1, 3)
+        hhs = tuple([np.random.randint(10, 300) for _ in range(hhs_dim)])
+        self._hidden_layer_sizes.append(hhs)
+        self.mlp.append(
+            MLPRegressor(
+                hidden_layer_sizes=hhs,
+                learning_rate="adaptive",
+                early_stopping=False,
+            )
         )
 
     def reset(self) -> None:
@@ -78,17 +97,18 @@ class MLPEpsilonGreedySearch(ParameterGenerator):
         self.mlp = self._make_default_mlp()
 
     @ParameterGenerator.Decorators.increment_counters
-    def get_trial_param(self) -> Dict[str, Union[int, float]]:
+    def get_trial_param(self, worker_id: int = 0) -> Dict[str, Union[int, float]]:
         """
         Returned a set of trial parameter.
 
         Increase the current_itr counter.
         """
         xi = self.xi * (1 - self.xi_decay) ** (self.current_itr - self.nb_exploration_itr)
+        xi = max(self.min_xi, xi)
         if self.current_itr < self.nb_exploration_itr:
             xi = np.inf
         if len(self.X) >= 2 and np.random.random() > xi:
-            return self.get_best_param(from_history=False)
+            return self.get_best_param(from_history=False, worker_id=worker_id)
         else:
             idx = np.random.randint(self.xx.shape[0])
 
@@ -100,6 +120,7 @@ class MLPEpsilonGreedySearch(ParameterGenerator):
         """
         Get the best predicted parameters with the current exploration.
         """
+        kwargs.setdefault("worker_id", -1)
         if self.minimise:
             return self._get_best_param_minimise(**kwargs)
         else:
@@ -109,7 +130,7 @@ class MLPEpsilonGreedySearch(ParameterGenerator):
         """
         Get the best (max) predicted parameters with the current exploration.
         """
-        f_hat = self.mlp.predict(self.xx)
+        f_hat = self.mlp_predict(self.xx, worker_id=kwargs.get("worker_id", -1))
         if kwargs.get("from_history", True):
             f_hat_max = np.max(f_hat)
             history_max = max(self.history, key=lambda t: t[-1])
@@ -123,7 +144,7 @@ class MLPEpsilonGreedySearch(ParameterGenerator):
         """
         Get the best (min) predicted parameters with the current exploration.
         """
-        f_hat = self.mlp.predict(self.xx)
+        f_hat = self.mlp_predict(self.xx, worker_id=kwargs.get("worker_id", -1))
         if kwargs.get("from_history", True):
             f_hat_min = np.min(f_hat)
             history_min = min(self.history, key=lambda t: t[-1])
@@ -149,14 +170,36 @@ class MLPEpsilonGreedySearch(ParameterGenerator):
         if kwargs.get("mlp_fit", True):
             self.mlp_fit_()
 
-    def mlp_fit_(self):
+    def _single_mlp_fit(self, worker_id):
+        assert worker_id >= 0
+        if len(self.mlp) <= worker_id:
+            self._add_random_mlp_instance_()
+            self._single_mlp_fit(worker_id)
         try:
-            self.mlp.fit(np.array(self.X), np.array(self.y))
+            self.mlp[worker_id].fit(np.array(self.X), np.array(self.y))
         except MemoryError:
-            self.mlp = BaggingRegressor(base_estimator=self.mlp, n_estimators=10)
-            self.mlp.fit(np.array(self.X), np.array(self.y))
+            self.mlp[worker_id] = BaggingRegressor(base_estimator=self.mlp[worker_id], n_estimators=10)
+            self.mlp[worker_id].fit(np.array(self.X), np.array(self.y))
         except ValueError:
             logging.warning("The mlp is not ready to fit. Must be at least 2 training data.")
+
+    def mlp_fit_(self, worker_id=-1):
+        assert worker_id >= -1
+        if worker_id == -1:
+            for w_id in range(len(self.mlp)):
+                self._single_mlp_fit(w_id)
+        else:
+            self._single_mlp_fit(worker_id)
+
+    def mlp_predict(self, X, worker_id=-1):
+        assert worker_id >= -1
+        if worker_id == -1:
+            all_f_hat = np.stack([self.mlp[w_id].predict(X) for w_id in range(len(self.mlp))])
+            return np.mean(all_f_hat, axis=0)
+        if len(self.mlp) <= worker_id:
+            self._add_random_mlp_instance_()
+            self.mlp_predict(X, worker_id)
+        return self.mlp[worker_id].predict(X)
 
     def _compute_param_expectation(
             self,
@@ -180,7 +223,7 @@ class MLPEpsilonGreedySearch(ParameterGenerator):
         """
         dim = self._values_names.index(param_name)
         _x = np.unique(self.xx[:, dim])
-        f_hat = self.mlp.predict(self.xx)
+        f_hat = self.mlp_predict(self.xx, worker_id=-1)
         raw_x_dim, raw_y = np.array(self.X)[:, dim], np.array(self.y)
         return dict(
             _x=_x,
