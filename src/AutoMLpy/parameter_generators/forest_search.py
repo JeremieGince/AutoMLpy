@@ -155,6 +155,9 @@ class RandomForestEpsilonGreedySearch(ParameterGenerator):
     def estimator_fit_(self, worker_id=-1):
         assert worker_id >= -1
         if len(self.X) < 2:
+            warn_msg = "fit is skipped cause of lake of training data. Must have at least 2 training data."
+            warnings.warn(warn_msg)
+            logging.info(warn_msg)
             return
         if worker_id == -1:
             self.estimator.fit(np.array(self.X), np.array(self.y))
