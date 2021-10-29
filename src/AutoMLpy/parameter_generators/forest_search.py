@@ -92,7 +92,7 @@ class RandomForestEpsilonGreedySearch(ParameterGenerator):
         if len(self.X) >= 2 and np.random.random() > xi:
             return self.get_best_param(from_history=False, worker_id=worker_id)
         else:
-            idx = np.random.randint(self.xx.shape[0])
+            idx = np.random.randint(len(self.xx))
 
         t_sub_space = self.xx[idx]
         t_params = self.convert_subspace_to_param(t_sub_space)
@@ -154,6 +154,8 @@ class RandomForestEpsilonGreedySearch(ParameterGenerator):
 
     def estimator_fit_(self, worker_id=-1):
         assert worker_id >= -1
+        if len(self.X) < 2:
+            return
         if worker_id == -1:
             self.estimator.fit(np.array(self.X), np.array(self.y))
         else:
