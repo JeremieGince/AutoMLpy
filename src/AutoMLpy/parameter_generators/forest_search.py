@@ -51,8 +51,8 @@ class RandomForestEpsilonGreedySearch(ParameterGenerator):
         self.xi_decay = kwargs.get("xi_decay", 0.0)
         self.min_xi = kwargs.get("min_xi", 1e-2)
         self.nb_exploration_itr = kwargs.get("nb_exploration_itr", 10)
+        self.predictions_accuracy = kwargs.get("predictions_accuracy", min(len(self.xx), 10_000)/len(self.xx))
         self._n_estimators = kwargs.get("n_estimators", 100)
-        self._nb_workers = kwargs.get("nb_workers", 1)
         assert self._nb_workers <= self._n_estimators
         nb_ids = self._nb_workers * int(np.ceil(self._n_estimators/self._nb_workers))
         indexes = np.array([i if i < self._n_estimators else -1 for i in range(nb_ids)])
@@ -63,6 +63,10 @@ class RandomForestEpsilonGreedySearch(ParameterGenerator):
 
         # --------- html data --------- #
         self._expectation_of_params = {}
+
+    @property
+    def nb_predictions_points(self):
+        return int(self.predictions_accuracy*len(self.xx))
 
     def _make_default_estimator(self):
         return ExtraTreesRegressor(n_estimators=self._n_estimators, n_jobs=self._nb_workers)
@@ -112,13 +116,14 @@ class RandomForestEpsilonGreedySearch(ParameterGenerator):
         """
         Get the best (max) predicted parameters with the current exploration.
         """
-        f_hat = self.estimator_predict(self.xx, worker_id=kwargs.get("worker_id", -1))
+        xx_subspace, indexes = self.xx.get_random_subspace(self.nb_predictions_points)
+        f_hat = self.estimator_predict(xx_subspace, worker_id=kwargs.get("worker_id", -1))
         if kwargs.get("from_history", True):
             f_hat_max = np.max(f_hat)
             history_max = max(self.history, key=lambda t: t[-1])
             if history_max[1] >= f_hat_max:
                 return history_max[0]
-        b_sub_space = self.xx[np.argmax(f_hat)]
+        b_sub_space = xx_subspace[np.argmax(f_hat)]
         b_params = self.convert_subspace_to_param(b_sub_space)
         return b_params
 
@@ -126,13 +131,14 @@ class RandomForestEpsilonGreedySearch(ParameterGenerator):
         """
         Get the best (min) predicted parameters with the current exploration.
         """
-        f_hat = self.estimator_predict(self.xx, worker_id=kwargs.get("worker_id", -1))
+        xx_subspace, indexes = self.xx.get_random_subspace(self.nb_predictions_points)
+        f_hat = self.estimator_predict(xx_subspace, worker_id=kwargs.get("worker_id", -1))
         if kwargs.get("from_history", True):
             f_hat_min = np.min(f_hat)
             history_min = min(self.history, key=lambda t: t[-1])
             if history_min[1] <= f_hat_min:
                 return history_min[0]
-        b_sub_space = self.xx[np.argmin(f_hat)]
+        b_sub_space = xx_subspace[np.argmin(f_hat)]
         b_params = self.convert_subspace_to_param(b_sub_space)
         return b_params
 
@@ -164,8 +170,10 @@ class RandomForestEpsilonGreedySearch(ParameterGenerator):
         else:
             raise NotImplementedError()
 
-    def estimator_predict(self, X, worker_id=-1):
+    def estimator_predict(self, X: np.ndarray = None, worker_id=-1):
         assert worker_id >= -1
+        if X is None:
+            X, _ = self.xx.get_random_subspace(self.nb_predictions_points)
         if worker_id == -1:
             return self.estimator.predict(X)
 
@@ -193,8 +201,9 @@ class RandomForestEpsilonGreedySearch(ParameterGenerator):
         dict of keys and values: [_x, f_hat, raw_x_dim, raw_y]
         """
         dim = self._values_names.index(param_name)
-        _x = np.unique(self.xx[:, dim])
-        f_hat = self.estimator_predict(self.xx, worker_id=-1)
+        xx_subspace, _ = self.xx.get_random_subspace(self.nb_predictions_points)
+        _x = np.unique(xx_subspace[:, dim])
+        f_hat = self.estimator_predict(xx_subspace, worker_id=-1)
         raw_x_dim, raw_y = np.array(self.X)[:, dim], np.array(self.y)
         return dict(
             _x=_x,
