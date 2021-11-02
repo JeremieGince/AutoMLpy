@@ -7,7 +7,7 @@ import os
 # ------- Saving -------- #
 import pickle
 import time
-from typing import Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Union
+from typing import Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Union, Tuple
 
 # ------- App Server -------- #
 import dash
@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 # ------- Math -------- #
 import numpy as np
 import pandas as pd
+from ..tools import try_prod_overflow
 # ------- Plotting -------- #
 import plotly.graph_objects as go
 from dash import dcc, html
@@ -25,7 +26,10 @@ class XXSpace:
 	def __init__(self, values_matrix):
 		self.values_matrix = values_matrix
 		self._sizes = [len(iterable) for iterable in values_matrix]
-		self._length = int(np.prod(self._sizes))
+		try:
+			self._length = int(try_prod_overflow(self._sizes))
+		except ValueError:
+			self._length = np.inf
 
 	@property
 	def shape(self) -> tuple:
@@ -40,6 +44,12 @@ class XXSpace:
 			for i in range(len(self._sizes))
 		]
 		return np.array([self.values_matrix[i][idx] for i, idx in enumerate(indices)])
+
+	def get_random_subspace(self, nb_points: int) -> Tuple[np.ndarray, np.ndarray]:
+		assert nb_points <= len(self)
+		indexes = np.sort(np.random.randint(0, len(self), size=nb_points))
+		points = np.stack(list(map(self.__getitem__, indexes)))
+		return points, indexes
 
 
 class ParameterGenerator:
@@ -97,6 +107,22 @@ class ParameterGenerator:
 		self._values_dict = values_dict
 
 		self.make_param_name_to_types(values_dict)
+
+		# ------- Workers -------- #
+		self._nb_workers = kwargs.get("nb_workers", 1)
+
+		# ------- UMAP -------- #
+		self.reducer = None
+		self._is_unsing_umap = kwargs.get("use_umap_for_high_dimensionnal_space", len(self._values_names) > 2)
+		if self._is_unsing_umap:
+			import umap
+			self.reducer = umap.UMAP(
+				n_components=kwargs.get("umap_n_components", 2),
+				metric=kwargs.get("umap_metric", "euclidean"),
+				random_state=kwargs.get("umap_random_state", None),
+				low_memory=kwargs.get("low_memory", False),
+				n_jobs=self._nb_workers,
+			)
 
 		# ------- Hp score_space -------- #
 		# self.xx = np.meshgrid(*[values_dict[p] for p in self._values_names])
