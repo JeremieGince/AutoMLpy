@@ -113,7 +113,7 @@ class ParameterGenerator:
 
 		# ------- UMAP -------- #
 		self.reducer = None
-		self._is_unsing_umap = kwargs.get("use_umap_for_high_dimensionnal_space", len(self._values_names) > 2)
+		self._is_unsing_umap = kwargs.get("use_umap_for_high_dimensional_space", len(self._values_names) > 2)
 		if self._is_unsing_umap:
 			import umap
 			self.reducer = umap.UMAP(
