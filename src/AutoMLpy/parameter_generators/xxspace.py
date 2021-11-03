@@ -104,7 +104,7 @@ class XXSpace:
 		if self._is_using_umap:
 			self._kwargs.setdefault("umap_n_components", 2)
 			self._kwargs.setdefault("umap_metric", "euclidean")
-			self._kwargs.setdefault("umap_random_state", None)
+			self._kwargs.setdefault("umap_random_state", 42)
 			self._kwargs.setdefault("low_memory", False)
 			self._kwargs.setdefault("nb_max_umap_fit_data", 1_000)
 			self._kwargs.setdefault("umap_resolution_space", 50)
