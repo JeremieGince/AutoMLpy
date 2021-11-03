@@ -1,8 +1,6 @@
 # ------- Base import -------- #
-import functools
 import json
 import logging
-import operator
 import os
 # ------- Saving -------- #
 import pickle
@@ -15,41 +13,13 @@ import matplotlib.pyplot as plt
 # ------- Math -------- #
 import numpy as np
 import pandas as pd
-from ..tools import try_prod_overflow
 # ------- Plotting -------- #
 import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output
 
-
-class XXSpace:
-	def __init__(self, values_matrix):
-		self.values_matrix = values_matrix
-		self._sizes = [len(iterable) for iterable in values_matrix]
-		try:
-			self._length = int(try_prod_overflow(self._sizes))
-		except ValueError:
-			self._length = np.inf
-
-	@property
-	def shape(self) -> tuple:
-		return len(self), len(self._sizes)
-
-	def __len__(self):
-		return self._length
-
-	def __getitem__(self, item):
-		indices = [
-			int((item / functools.reduce(operator.mul, self._sizes[i + 1:], 1)) % self._sizes[i])
-			for i in range(len(self._sizes))
-		]
-		return np.array([self.values_matrix[i][idx] for i, idx in enumerate(indices)])
-
-	def get_random_subspace(self, nb_points: int) -> Tuple[np.ndarray, np.ndarray]:
-		assert nb_points <= len(self)
-		indexes = np.sort(np.random.randint(0, len(self), size=nb_points))
-		points = np.stack(list(map(self.__getitem__, indexes)))
-		return points, indexes
+# ------- XXSpace -------- #
+from .xxspace import XXSpace
 
 
 class ParameterGenerator:
@@ -111,23 +81,8 @@ class ParameterGenerator:
 		# ------- Workers -------- #
 		self._nb_workers = kwargs.get("nb_workers", 1)
 
-		# ------- UMAP -------- #
-		self.reducer = None
-		self._is_unsing_umap = kwargs.get("use_umap_for_high_dimensional_space", len(self._values_names) > 2)
-		if self._is_unsing_umap:
-			import umap
-			self.reducer = umap.UMAP(
-				n_components=kwargs.get("umap_n_components", 2),
-				metric=kwargs.get("umap_metric", "euclidean"),
-				random_state=kwargs.get("umap_random_state", None),
-				low_memory=kwargs.get("low_memory", False),
-				n_jobs=self._nb_workers,
-			)
-
 		# ------- Hp score_space -------- #
-		# self.xx = np.meshgrid(*[values_dict[p] for p in self._values_names])
-		# self.xx = np.array(list(zip(*[_x.ravel() for _x in self.xx])))
-		self.xx = XXSpace([values_dict[p] for p in self._values_names])
+		self.xx = XXSpace([values_dict[p] for p in self._values_names], **kwargs)
 		self.minimise = kwargs.get("minimise", True)
 
 		# ------- Counters -------- #

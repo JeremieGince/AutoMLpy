@@ -4,6 +4,7 @@ from .random_search import RandomHpSearch
 from .gp_search import GPOHpSearch
 from .forest_search import RandomForestEpsilonGreedySearch
 from .parameter_generator import ParameterGenerator
+from .xxspace import XXSpace
 
 
 class SearchType(enum.Enum):

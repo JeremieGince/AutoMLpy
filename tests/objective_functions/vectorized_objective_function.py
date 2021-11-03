@@ -95,7 +95,7 @@ if __name__ == '__main__':
     # ----------------- Initialization -------------------- #
     obj_func_hp_optimizer = VectorizedObjectiveFuncHpOptimizer()
     obj_func_hp_optimizer.nb_points = 1_000
-    obj_func_hp_optimizer.set_dim(1)
+    obj_func_hp_optimizer.set_dim(3)
     func = obj_func_hp_optimizer.build_model()
     print(f"Maximum of objective function: {obj_func_hp_optimizer.max:.3f}")
     print(f"Minimum of objective function: {obj_func_hp_optimizer.min:.3f}")
@@ -172,23 +172,27 @@ if __name__ == '__main__':
     # ----------------- Optimization -------------------- #
     start_time = time.time()
 
-    # param_gen = GPOHpSearch(
-    #     obj_func_hp_optimizer.hp_space,
-    #     # max_seconds=60*1,
-    #     max_itr=200,
-    #     xi=0.1,
-    #     minimise=True,
-    #     gpr_n_restarts_optimizer=2,
-    # )
-
-    param_gen = MLPEpsilonGreedySearch(
+    param_gen = GPOHpSearch(
         obj_func_hp_optimizer.hp_space,
         # max_seconds=60*1,
-        max_itr=100,
+        max_itr=1,
         xi=0.1,
+        xi_decay=0.05,
         minimise=True,
-        hidden_layer_sizes=(100, 100, )
+        gpr_n_restarts_optimizer=2,
+        use_umap_for_high_dimensional_space=True,
+        kernel_add_rbf=False,
+        kernel_add_rational_quadratic=False,
     )
+
+    # param_gen = MLPEpsilonGreedySearch(
+    #     obj_func_hp_optimizer.hp_space,
+    #     # max_seconds=60*1,
+    #     max_itr=100,
+    #     xi=0.1,
+    #     minimise=True,
+    #     hidden_layer_sizes=(100, 100, )
+    # )
 
     opt_param_gen = obj_func_hp_optimizer.optimize(
         param_gen,
