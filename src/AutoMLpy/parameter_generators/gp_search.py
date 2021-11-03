@@ -63,6 +63,7 @@ class GPOHpSearch(ParameterGenerator):
         self.X_transformed = []
         self._current_xx_transformed_pred = None
         self._current_X_transformed_pred = None
+        self._is_fitted = False
         self.estimator = self._make_default_gpr()
 
         # --------- html data --------- #
@@ -111,7 +112,7 @@ class GPOHpSearch(ParameterGenerator):
 
         Increase the current_itr counter.
         """
-        if len(self.X) > 0:
+        if self._is_fitted:
             eis, idx = self.expected_improvement(self.get_xi(worker_id))
         else:
             idx = np.random.randint(self.xx.transformed_space.shape[0])
@@ -187,6 +188,7 @@ class GPOHpSearch(ParameterGenerator):
         self._current_X_transformed_pred = self.estimator.predict(
             np.array(self.X_transformed), return_std=True
         )
+        self._is_fitted = True
 
     def expected_improvement(self, xi: float) -> Tuple[np.ndarray, np.ndarray]:
         if self.minimise:
