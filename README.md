@@ -23,6 +23,10 @@ pip install AutoMLpy
 1. Copy the path of this file on your computer;
 2. pip install it with ``` pip install [path].whl ```
 
+## With pip+git:
+```
+pip install git+https://github.com/JeremieGince/AutoMLpy
+```
  
  ---------------------------------------------------------------------------
 # Example - MNIST optimization with Tensorflow & Keras
