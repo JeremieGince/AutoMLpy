@@ -18,3 +18,5 @@ src/AutoMLpy/parameter_generators/grid_search.py
 src/AutoMLpy/parameter_generators/mlp_search.py
 src/AutoMLpy/parameter_generators/parameter_generator.py
 src/AutoMLpy/parameter_generators/random_search.py
+src/AutoMLpy/parameter_generators/tools.py
+src/AutoMLpy/parameter_generators/xxspace.py
