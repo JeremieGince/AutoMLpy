@@ -123,3 +123,5 @@ examples/parameter_generators_data
 /*.egg-info
 
 *.html
+*.json
+*.pkl
