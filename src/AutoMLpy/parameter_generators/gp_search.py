@@ -130,6 +130,8 @@ class GPOHpSearch(ParameterGenerator):
         """
         Get the best predicted parameters with the current exploration.
         """
+        if not self._is_fitted:
+            self.estimator_fit_()
         if self.minimise:
             return self._get_best_param_minimise(**kwargs)
         else:
@@ -141,10 +143,8 @@ class GPOHpSearch(ParameterGenerator):
         """
         f_hat, _ = self._current_xx_transformed_pred
         if kwargs.get("from_history", True):
-            f_hat_max = np.max(f_hat)
             history_max = max(self.history, key=lambda t: t[-1])
-            if history_max[1] >= f_hat_max:
-                return history_max[0]
+            return history_max[0]
         b_sub_space = self.xx.inverse_transform(self.xx.transformed_space[np.argmin(f_hat)])
         b_params = self.convert_subspace_to_param(b_sub_space)
         return b_params
@@ -155,10 +155,8 @@ class GPOHpSearch(ParameterGenerator):
         """
         f_hat, _ = self._current_xx_transformed_pred
         if kwargs.get("from_history", True):
-            f_hat_min = np.min(f_hat)
             history_min = min(self.history, key=lambda t: t[-1])
-            if history_min[1] <= f_hat_min:
-                return history_min[0]
+            return history_min[0]
         b_sub_space = self.xx.inverse_transform(self.xx.transformed_space[np.argmin(f_hat)])
         b_params = self.convert_subspace_to_param(b_sub_space)
         return b_params
@@ -367,11 +365,11 @@ class GPOHpSearch(ParameterGenerator):
         dict of keys and values: [_x, mu_hat, std_hat, raw_x_dim, raw_y]
         """
         dim = self._values_names.index(param_name)
-        _x = np.unique(self.xx[:, dim])
+        _x = np.unique(self.xx.get_random_subspace(1_000).to_numpy()[:, dim])
         f_hat, _ = self._current_X_transformed_pred
         mu_hat, std_hat = self._current_xx_transformed_pred
         raw_x_dim, raw_y = np.array(self.X)[:, dim], np.array(self.y)
-        ei, _ = self.expected_improvement()
+        ei, _ = self.expected_improvement(self.get_xi())
         return dict(
             _x=_x,
             mu_hat=mu_hat,
