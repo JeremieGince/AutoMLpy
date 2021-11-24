@@ -762,7 +762,7 @@ class ParameterGenerator:
 		The path to the saved file.
 		"""
 		save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/optimal_hp/")
-		save_name = kwargs.get("save_name", f"{self.default_save_name}-opt_hp")
+		save_name = kwargs.get("save_name", f"{self.default_save_name}")+"-opt_hp"
 		save_path = f'{save_dir}/{save_name}.json'
 		os.makedirs(save_dir, exist_ok=True)
 		# save_path = save_dir + '/' + save_name
@@ -787,7 +787,7 @@ class ParameterGenerator:
 		The path to the saved file.
 		"""
 		save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/history/")
-		save_name = kwargs.get("save_name", f"{self.default_save_name}-history")
+		save_name = kwargs.get("save_name", f"{self.default_save_name}")+"-history"
 		save_path = f'{save_dir}/{save_name}.json'
 		os.makedirs(save_dir, exist_ok=True)
 
@@ -810,7 +810,7 @@ class ParameterGenerator:
 		The saving path.
 		"""
 		save_dir = kwargs.get("save_dir", f"{self.default_save_dir}/obj/")
-		save_name = kwargs.get("save_name", f"{self.default_save_name}-obj")
+		save_name = kwargs.get("save_name", f"{self.default_save_name}")+"-obj"
 		os.makedirs(save_dir, exist_ok=True)
 
 		path = f'{save_dir}/{save_name}.pkl'
